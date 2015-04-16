@@ -90,7 +90,7 @@ FUNCTION r(potential (mV))  { 	:fraction of fast component in double exponential
         UNITSON
 }
 
-FUNCTION tau(potential (mV),t1,t2,t3) (ms) {
+FUNCTION tau(potential (mV),t1,t2,t3, Q10_channel) (ms) {
 	UNITSOFF
 	Q10 = Q10_channel^((celsius -23(degC)) / 10(degC))
         tau = exp(((t1 * potential) - t2)*t3) / Q10
