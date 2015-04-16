@@ -1,0 +1,499 @@
+objref AdR, tmp_vec, spkidx, g1, g2, g3, g4, g5, g6, Yaxis, IOfaxis, paxis
+objref dfs_axis, fl_axis
+objref rates, snd, thrd, filename, dta, Ahp_dcy, Ahp_peak, dta2
+strdef fout, ext, tr_name, command, fn, sys_comm
+
+rates = new Matrix()
+AdR = new Matrix()
+tmp_vec = new Vector(20)
+spkidx = new Vector()
+Yaxis = new Vector()
+snd = new Vector()
+thrd = new Vector()
+IOfaxis = new Vector()
+paxis = new Vector()
+dfs_axis = new Vector()
+fl_axis = new Vector()
+dta = new Vector () 
+dta2 = new Vector ()
+// g1 = new Graph()
+// g2 = new Graph()
+// g3 = new Graph()
+// g4 = new Graph()
+// g5 = new Graph()
+// g6 = new Graph()
+
+proc FR() {
+    // Arguments: 1 spiketrain
+  //$o1.printf()
+  
+  print "TTFS ", $o1.x[0]
+  $o1.printf()
+    dta.deriv($o1,1,1)
+    dta.printf()
+    dta2.resize(dta.size())
+    dta2.fill(1000)
+    dta2.div(dta)
+    dta2.printf()
+    print "FR (fst, end, adaptation, mean, CV): (", dta2.x[0] , ", ", dta2.x[dta2.size()-1],", ",dta2.x[dta2.size()-1]/dta2.x[0],", ", 1000/dta.mean(),", ", dta.stdev()/dta.mean(), ")"
+}
+
+func FindInjVC_return() {
+    cvode.active(0)
+    $o1.dur[0] = 500
+    $o1.dur[1] = 0
+    $o1.dur[2] = 0
+    
+    $o1.amp[0] = $2
+    $o1.amp[1] = -70
+    $o1.amp[2] = -60
+    tmp = tstop
+    tstop = 498
+    run()
+    tstop = tmp
+    tmp = $o1.i
+   
+    $o1.dur[0] = 0
+    $o1.dur[1] = 0
+    $o1.dur[2] = 0    
+    cvode.active(1)
+    
+    return tmp
+}
+
+func FindInj() { local up, low, inj_med, med, exit_now, inj_up, inj_low, idx
+    // Arguments: 1 command, 2 cell, 3 init_hi, 4 init_low, 5 Clamp, 6 min|point, 7 time_tr, 8 time
+    exit_now = 0
+    inj_up = $3
+    inj_low = $4
+    up = 0
+    low = -1000
+    while ( (up>low) && (!exit_now)) {
+	$o5.amp = inj_up
+	run()
+	idx = $o7.indwhere(">",$8)
+// 	$o7.printf()
+// 	print $o7.x[idx]
+// 	print $8
+	if (!strcmp($s6,"min")) {up = $o2.EL_Vm.min()} else {up = $o2.EL_Vm.x[idx]}
+	while ( up < $1) {
+//	    print "Up too low  ", up
+	    inj_up = inj_up*0.8
+	    $o5.amp = inj_up
+	    run()
+	    idx = $o7.indwhere(">",$8)
+	    if (!strcmp($s6,"min")) {up = $o2.EL_Vm.min()} else {up = $o2.EL_Vm.x[idx]}
+	}
+//	print "up", up, inj_up
+	$o5.amp = inj_low
+	run()
+	idx = $o7.indwhere(">",$8)
+	if (!strcmp($s6,"min")) {low = $o2.EL_Vm.min()} else {low = $o2.EL_Vm.x[idx]}
+	while ( low > $1) {
+//	    print "Low too up"
+	    inj_low = inj_low*1.05
+	    $o5.amp = inj_low
+	    run()
+	    idx = $o7.indwhere(">",$8)
+	    if (!strcmp($s6,"min")) {low = $o2.EL_Vm.min()} else {low = $o2.EL_Vm.x[idx]}
+	}
+	
+	med = (up+low)/2
+	inj_med = (inj_up+inj_low)/2
+//	print "low", low, inj_low
+//	print abs($1-med), $1, med
+	if (abs($1-med)<0.1) {exit_now=1}
+	if (med>$1) {inj_up = inj_med} else {inj_low = inj_med}
+	if ( low == up) {print "Attenzione!!"}
+    }
+    return inj_med
+}
+
+
+proc append_row() { local i
+    if ($o2.ncol < $o1.size()) $o2.resize($o2.nrow,$o1.size())
+    for i=0,$o1.size()-1 $o2.x[$o2.nrow-1][i] = $o1.x[i]
+    $o2.resize($o2.nrow+1,$o2.ncol)
+}
+
+
+objref data, subtime, spkidx2, logg, zero, fit_vec, subtime_fit,dta_fit
+data = new Vector(7)
+spkidx2 = new Vector()
+subtime = new Vector()
+logg = new Vector()
+zero = new Vector(2)
+fit_vec = new Vector()
+subtime_fit = new Vector()
+dta_fit = new Vector()
+
+
+proc PrintRates() {
+    print "Control\tIh\tKM\tSK-bSK2\tHVA\tKA"
+    $o1.getcol(9).printf
+    $o1.getcol(1).div($o1.getcol(1).get(0)/100).sub(100).printf
+}
+
+
+proc Chblock_run_Ih() {
+	// Arguments: 1 cell, 2 time, 3 dirname, 4 channel name, 5 conductance, 6 block
+
+	print $s4, " Block"
+	access $o1.soma	
+	sprint(fout,"tmp = %s1",$s5)
+	execute(fout)
+	sprint(fout,"%s1 = %s1*(1-%f/100)",$s5,$s5,$6)
+	execute(fout)
+	sprint(fout,"tmp2 = %s2",$s5)
+	execute(fout)
+	sprint(fout,"%s2 = %s2*(1-%f/100)",$s5,$s5,$6)
+	execute(fout)
+	
+	run()
+	sprint(fout,"%s1 = tmp",$s5)
+	execute(fout)
+	sprint(fout,"%s2 = tmp2",$s5)
+	execute(fout)
+
+	sprint(tr_name,$s4)
+	sprint(fn,"%s/Traces.lst",$s3)	
+	name2file(fn,tr_name)
+	ext = ".trc"
+	sprint(fout,"%s/%s_Vm%s",$s3,$s4,ext)
+	tr2file(fout, $o2, $o1.EL_Vm)
+	ext = ".spt"
+    	sprint(fout,"%s/%s%s",$s3,$s4,ext)
+	spt2file(fout, $o1.SpikeTrain)
+}
+
+
+func Cell_area() { local surf
+    surf = 0
+    forall { surf = surf + area(0.5)*nseg}
+    return surf
+}
+
+proc Cell_Pass() { local cnm
+    cnm = 0
+    forall { cnm = cnm + area(0.5)*nseg*glbar_Golgi_lkg*1e-8}
+    print "Resistance\t",1/cnm*1e-6," MOhm"
+    cnm = 0
+    forall { cnm = cnm + area(0.5)*nseg*cm*1e-8}
+    print "Capacitance\t",cnm*1e6," pF"
+}
+
+
+
+func PassiveSlope() {local oldtime,stime,hi_inj,low_inj, duri,error
+    // Arguments: 1 command_hi, 2 command_low, 3 cell, 4 Clamp_base, 
+    //            5  Clamp_hyp, 6 time tr, 7 timelim, 8 simcnt
+    $o4.del = 0
+    $o4.dur = $7
+    
+    $o5.del = 6000
+    duri = $o5.dur
+    $o5.dur = 3000
+    
+    $o4.amp = -0.01
+    $o5.amp = 0.0
+    oldtime = tstop
+    stime = $7
+    tstop = stime
+    run()
+    print "Basal"
+    hi_inj = FindInj($1,$o3,-0.08,-0.2,$o4,"point",$o6,$o5.del-100)
+    $o4.amp = hi_inj
+    print "Hyperpolarized"
+    $o5.amp = -0.2
+    dta2.resize(6)
+    dta.resize(6)
+    for i=0,5 {
+	dta2.x[i] = $1+(i+1)*($2-$1)/20 // target Vm
+	low_inj = FindInj(dta2.x[i],$o3,-0.08,-0.2,$o5,"point",$o6,$o5.del+$o5.dur-100)
+	dta.x[i] = low_inj
+	dta2.x[i] = dta2.x[i] - $1
+    }
+    dta2.printf()
+    dta.printf()
+    dta2.plot(g2,dta,1,1)
+    g2.exec_menu("View = plot")
+    g2.flush()
+    doNotify()
+    
+    zero.x[0] = (dta2.x[5]-dta2.x[0])/(dta.x[5]-dta.x[0])
+    print "Slope ", zero.x[0]
+    zero.x[1] = dta2.x[5]-zero.x[0]*dta.x[5]
+    error = dta.fit(fit_vec,"line",dta2,&zero.x[0],&zero.x[1])
+    print "Error ", error
+    print "Slope ", zero.x[0]
+    print "Intercept ", zero.x[1]
+    $o5.amp = low_inj
+    
+    
+    
+    print "Holding current = ",hi_inj*1e3, " Hyp current = ",low_inj*1e3 " pA"
+    run()
+    tstop = oldtime
+//    $o5.dur = duri
+
+    sprint(dirname,"SimData_%d/Passive/",$8)
+    sprint(command,"mkdir -p %s",dirname)
+    system(command)
+
+    sprint(fn,"Hyp_step_%d-%d",$1,$2)
+    sprint(fout,"%s%s_Vm.trc",dirname,fn)
+    tr2file(fout, $o6, $o3.RT_Vm)
+    
+    Input_Res = ($o3.RT_Vm.x[$o6.indwhere(">",$o5.del-1000)]-$o3.RT_Vm.x[$o6.indwhere(">",$o5.del+$o5.dur-50)])/(-low_inj)*1e6
+    
+    sprint(command,"Input Resistance = %5.0d MOhm", Input_Res/1e6)
+    print command
+    sprint(fout,"%sPassive.dat",dirname)
+    sprint(command,"%5.0d", Input_Res/1e6)
+    name2file(fout,command)
+    
+    return Input_Res/1e6
+}
+
+func PassiveVC() {local oldtime,stime,hi_inj,low_inj, duri
+    // Arguments: 1 command_hi, 2 command_low, 3 cell, 
+    //            4  Vlamp_hy, 5 time tr, 6 timelim, 7 simcnt, 8 Clcamp, 9 Clcamp
+    $o4.dur[0] = 1000
+    $o4.dur[1] = $6
+    $o4.dur[2] = 1000
+        
+    $o4.amp[0] = $1
+    $o4.amp[1] = $2
+    $o4.amp[2] = $1
+//    print $o4.amp[0], $o4.amp[1],$o4.amp[2]
+    
+    oldtime = tstop
+    stime = $6+2000
+    tstop = stime
+    cvode.active(0)
+    init()
+    continuerun(900)
+    hi_inj = $o4.i
+    continuerun(999+$6)
+    low_inj = $o4.i
+    
+    $o4.dur[0] = 0
+    $o4.dur[1] = 0
+    $o4.dur[2] = 0
+    
+    $o8.del = 0 
+    $o8.dur = 100000
+    $o8.amp = hi_inj
+    $o9.del = 1000 
+    $o9.dur = 1000
+    $o9.amp = low_inj
+    tstop = 2000+$6
+    cvode.active(1)
+    run()
+    $o8.amp = 0
+    $o9.amp = 0
+    
+    
+//     print "Holding current = ",hi_inj*1e3, " Hyp current = ",low_inj*1e3 " pA"
+//     print "Input Resistance = ",($1-$2)*1e-3/(hi_inj-low_inj)*1e9*1e-6, " MOhm"
+    tstop = oldtime
+//     sprint(dirname,"SimData_%d/PassiveVC/",$8)
+//     sprint(command,"mkdir -p %s",dirname)
+//     system(command)
+
+//     sprint(fn,"Hyp_step_%d-%d",$1,$2)
+//     sprint(fout,"%s%s_Vm.trc",dirname,fn)
+//     tr2file(fout, $o6, $o3.RT_Vm)
+        
+    return ($1-$2)*1e-3/(hi_inj-low_inj)*1e9*1e-6
+}
+
+
+func Passive() {local oldtime,stime,hi_inj,low_inj, duri
+    // Arguments: 1 command_hi, 2 command_low, 3 cell, 4 Clamp_base, 
+    //            5  Clamp_hyp, 6 time tr, 7 timelim, 8 simcnt
+    $o4.del = 0
+    $o4.dur = $7
+    
+    $o5.del = 2000
+    duri = $o5.dur
+    $o5.dur = 1000
+    
+    $o4.amp = -0.1
+    $o5.amp = 0
+    oldtime = tstop
+    stime = $7
+    tstop = stime
+    run()
+    print "Basal"
+    hi_inj = FindInj($1,$o3,-0.2,-0.4,$o4,"point",$o6,$o5.del-100)
+    $o4.amp = hi_inj
+    print "Hyperpolarized"
+    $o5.amp = -0.1
+    low_inj = -0.6
+    low_inj = FindInj($2,$o3,-0.08,-0.2,$o5,"point",$o6,$o5.del+$o5.dur-100)
+    $o5.amp = low_inj
+    
+    print "Holding current = ",hi_inj*1e3, " Hy6p current = ",low_inj*1e3 " pA"
+    run()
+    tstop = oldtime
+//    $o5.dur = duri
+
+    sprint(dirname,"SimData_%d/Passive/",$8)
+    sprint(command,"mkdir -p %s",dirname)
+    system(command)
+
+    sprint(fn,"Hyp_step_%d-%d",$1,$2)
+    sprint(fout,"%s%s_Vm.trc",dirname,fn)
+    tr2file(fout, $o6, $o3.RT_Vm)
+    Input_Res_ss = ($o3.RT_Vm.x[$o6.indwhere(">",$o5.del-100)]-$o3.RT_Vm.x[$o6.indwhere(">",$o5.del+$o5.dur-50)])/(-low_inj)
+    Input_Res_sag = ($o3.RT_Vm.x[$o6.indwhere(">",$o5.del-100)]-$o3.RT_Vm.min())/(-low_inj)
+    print $o3.RT_Vm.min()
+    sprint(command,"Input Resistance SS = %5.0d MOhm", Input_Res_ss)
+    print command
+    sprint(command,"Input Resistance Sag = %5.0d MOhm", Input_Res_sag)
+    print command
+    sprint(fout,"%sPassive.dat",dirname)
+    sprint(command,"%5.0d", Input_Res_ss)
+    name2file(fout,command)
+    
+    return Input_Res_ss
+}
+
+
+
+
+proc FR_show() {
+	FR(Golgi[0].SpikeTrain)
+    }
+    
+
+proc PassiveStep() {
+    cvode.active(0)
+    $o1.dur[0] = 500
+    $o1.dur[1] = 50
+    $o1.dur[2] = 500
+    
+    $o1.amp[0] = -60
+    $o1.amp[1] = -70
+    $o1.amp[2] = -60
+    $o2.record(&$o1.i)
+    tmp = tstop
+    tstop = 1050
+    run()
+    
+    sprint(command,"mkdir -p %s/Passive",$s4)
+    system(command)
+
+    sprint(command,"%s/Passive/%s",$s4,"PassiveStep.trc")
+    tr2file(command, $o3, $o2)
+
+    $o1.dur[0] = 0
+    $o1.dur[1] = 0
+    $o1.dur[2] = 0    
+    cvode.active(1)
+}
+
+proc PassiveRcc() {
+    print "Control Rin"
+    Input_Res = PassiveVC(-60,-80,$o6,$o5,$o4,100,$3,$o1,$o2)
+    xpanel("1")
+    strdef stroutput
+    sprint(stroutput,"Control Rin %4.0f (MOhm)",Input_Res)
+    xlabel(stroutput)
+    print "ZD Rin"
+    tmp1 = Golgi[0].soma.gbar_Golgi_hcn1
+    tmp2 = Golgi[0].soma.gbar_Golgi_hcn2
+    Golgi[0].soma.gbar_Golgi_hcn1 = 0
+    Golgi[0].soma.gbar_Golgi_hcn2 = 0
+    Input_Res = PassiveVC(-60,-110,$o6,$o5,$o4,100,$3,$o1,$o2)
+    sprint(stroutput,"ZD Rin %4.0f (MOhm)",Input_Res)
+    xlabel(stroutput)
+    Golgi[0].soma.gbar_Golgi_hcn1 = tmp1
+    Golgi[0].soma.gbar_Golgi_hcn2 = tmp2
+    xpanel()
+}
+
+proc Sag() {
+    // Arguments: cclampy[0],cclampy[1],simcnt,time_tr,vclampy,Golgi[0],tonic,step,store,stept,dirname
+    $o1.del = 0
+    $o1.dur = 10000
+    $o1.amp = $7
+    
+    $o2.del = 1600
+    $o2.dur = $10
+    $o2.amp = $8
+    
+    Golgi[0].elec $o9.record(&v(0.5))
+    
+    run()
+
+    
+    $o1.del = 0
+    $o1.dur = 10000
+    $o1.amp = 0
+    
+    $o2.del = 1000
+    $o2.dur = 1000
+    $o2.amp = 0
+    
+    FR($o6.SpikeTrain)
+    sprint(command,"%s/sPike/SagRE/%s",$s11,"Control_Vm.trc")
+    tr2file(command, $o4,$o6.EL_Vm)
+    
+}
+
+
+proc FindInjVC() {
+    cvode.active(0)
+    $o1.dur[0] = 500
+    $o1.dur[1] = 0
+    $o1.dur[2] = 0
+    
+    $o1.amp[0] = $2
+    $o1.amp[1] = -70
+    $o1.amp[2] = -60
+    tmp = tstop
+    tstop = 100
+    run()
+    
+    $&3 = $o1.i
+    print $o1.i
+    tstop = tmp
+    $o1.dur[0] = 0
+    $o1.dur[1] = 0
+    $o1.dur[2] = 0    
+    cvode.active(1)
+    
+}
+
+func get_currents() {
+factor = soma_surf*conv_mA_pA
+//    i_Golgi_seal( 0.5 ) * factor
+	dta.resize(18)
+	Golgi[0].soma dta.x[0] = i_Golgi_lkg( 0.5 ) * factor
+	Golgi[0].soma dta.x[1] = ica2_Golgi_Ca_LVA( 0.5 ) * factor
+	Golgi[0].soma dta.x[2] = ica_Golgi_Ca_HVA( 0.5 ) * factor
+	Golgi[0].soma dta.x[3] = ik_Golgi_BK( 0.5 ) * factor
+	Golgi[0].soma dta.x[4] = ik_Golgi_KM( 0.5 ) * factor
+	Golgi[0].soma dta.x[5] = ik_Golgi_KV( 0.5 ) * factor
+	Golgi[0].soma dta.x[6] = ik_Golgi_KA( 0.5 ) * factor
+	Golgi[0].soma dta.x[7] = ina_Golgi_Na( 0.5 ) * factor
+	Golgi[0].soma dta.x[8] = ina_Golgi_NaP( 0.5 ) * factor
+	Golgi[0].soma dta.x[9] = ina_Golgi_NaR( 0.5 ) * factor
+	Golgi[0].soma dta.x[10] = ik_Golgi_SK2( 0.5 ) * factor
+	Golgi[0].soma dta.x[11] = ih_Golgi_hcn1( 0.5 ) * factor
+	Golgi[0].soma dta.x[12] = ih_Golgi_hcn2( 0.5 ) * factor
+	Golgi[0].soma dta.x[13] = i_Golgi_lkg( 0.5 ) * factor
+	Golgi[0].soma dta.x[14] = ca_pump_i_Golgi_CALC( 0.5 ) * factor
+	Golgi[0].soma dta.x[15] = ca2_pump_i_Golgi_CALC_ca2( 0.5 ) * factor
+	Golgi[0].dend[0]  dta.x[16] = (v(0.5) - Golgi[0].soma.v(0.5)) / ri(0.5)
+	Golgi[0].axon  dta.x[17] = (v(0.5) - Golgi[0].soma.v(0.5)) / ri(0.5)
+	somma = 0
+	for i = 0,17 {
+		if (!(i==4)) somma = somma + dta.x[i]
+		}
+	Golgi[0].soma n = (somma/factor)/(v(0.5)-ek)/ gkbar_Golgi_KM( 0.5 )
+	return n
+}
+

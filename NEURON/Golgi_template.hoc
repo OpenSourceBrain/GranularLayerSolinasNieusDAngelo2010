@@ -1,0 +1,239 @@
+// In this configuration the ion channels 
+// were not corrected for the Liquid Junction potential.
+// The ion reversal potential were corrected in agreement
+// with the voltage shift.
+
+begintemplate Goc
+  public MF_AMPA_L,MF_NMDA_L,Area,GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  public MF_AMPA_SL,MF_NMDA_SL,Area,GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  public SpikeTrain, coord, nears, myself
+  public soma, axon,elec,seal,dend, targets, target_goc, time
+  public MF_L, PF_L, RT_Vm, time, EL_Vm,selected
+  public exc, inh,target_glomi, Gclamp, MLI_L, MLI_SL, source_glm
+  public FR, currs, acts, inacts, channels
+  
+  create soma
+  create axon
+  create elec,seal
+  create dend[3]
+
+  objref MF_NMDA_L, MF_AMPA_L, GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  objref MF_NMDA_SL, MF_AMPA_SL, GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  objref myself, nears
+  objref SpikeTrain,nil,netcon, coord
+  objref targets, target_goc, target_glomi
+  objref RT_Vm, time, EL_Vm
+  objref MF_L, PF_L, Gclamp, MLI_L, MLI_SL, source_glm
+  objref exc[400], inh[400]
+  objref currs, acts, inacts, channels
+  
+proc init() {
+    
+	coord = new Vector(3)
+	coord.x[0] = 0
+	coord.x[1] = 0
+	coord.x[2] = 0
+
+	selected = 0
+	
+	MF_L = new List()
+	PF_L = new List()
+	MF_AMPA_L = new List()
+	MF_NMDA_L = new List()
+	PF_AMPA_L = new List()
+	PF_NMDA_L = new List()
+	PF_KAIN_L = new List()
+	GABA_L = new List()
+	
+	MF_AMPA_SL = new List()
+	MF_NMDA_SL = new List()
+	PF_AMPA_SL = new List()
+	PF_NMDA_SL = new List()
+	PF_KAIN_SL = new List()
+	GABA_SL = new List()
+	
+	nears = new List()
+	myself = new List()
+	targets = new List()
+	target_glomi = new List()
+	MLI_L = new List()
+	MLI_SL = new List()
+	source_glm = new List()
+	
+	target_goc = new List()
+	RT_Vm = new Vector()
+	EL_Vm = new Vector()
+	time = new Vector()
+    
+    create soma
+    soma {
+	nseg = 1
+	diam = 27 // 22 pF Dieudonne98
+	L = 27
+	Ra = 100 // From Roth&Hausser2000
+	celsius = 23
+	
+	insert Golgi_lkg
+	
+	insert Golgi_Na
+	insert Golgi_NaR
+	insert Golgi_NaP
+	
+	insert Golgi_Ca_HVA
+	insert Golgi_Ca_LVA
+		
+	insert Golgi_KV
+	insert Golgi_KM
+	insert Golgi_KA
+	
+	insert Golgi_BK
+ 	insert Golgi_SK2
+	
+        insert Golgi_hcn1
+        insert Golgi_hcn2
+
+	insert Golgi_CALC
+	insert Golgi_CALC_ca2
+	
+ 	usetable_Golgi_BK = 0
+ 	usetable_Golgi_LVA = 1
+ 	usetable_Golgi_HVA = 1
+ 	usetable_Golgi_KA = 1
+ 	usetable_Golgi_KV = 1
+ 	usetable_Golgi_NaR = 1
+ 	usetable_Golgi_KM = 1
+ 	usetable_Golgi_Na = 1
+ 	usetable_Golgi_NaP = 1
+	
+	cai0_ca_ion = 50e-6
+	ca2i0_ca2_ion = cai0_ca_ion
+	
+	cai = cai0_ca_ion
+	
+	ca2i = cai
+	ca2o = cao
+	
+	cai0_Golgi_CALC = cai0_ca_ion
+	ca2i0_Golgi_CALC_ca2 = cai0_ca_ion
+	
+ 	ena=87.39
+	ek=-84.69
+		
+	SpikeTrain = new Vector()
+	netcon = new NetCon(&v(0.5),nil)
+	netcon.threshold=-20
+	netcon.record(SpikeTrain)
+	
+	RT_Vm.record(&v(0.5))
+	time = new Vector()
+	time.record(&t)
+	
+	if ($1) {
+	    channels = new List()
+	    channels.append(new String("Golgi_lkg"))
+	    channels.append(new String("Golgi_Na"))
+	    channels.append(new String("Golgi_NaR"))
+	    channels.append(new String("Golgi_NaP"))
+	    channels.append(new String("Golgi_Ca_HVA"))
+	    channels.append(new String("Golgi_Ca_LVA"))
+	    channels.append(new String("Golgi_KV"))
+	    channels.append(new String("Golgi_KM"))
+	    channels.append(new String("Golgi_KA"))
+	    channels.append(new String("Golgi_BK"))
+	    channels.append(new String("Golgi_SK2"))
+	    channels.append(new String("Golgi_hcn1"))
+	    channels.append(new String("Golgi_hcn2"))
+	    
+	    currs = new List()
+	    for i = 0,12 {
+		currs.append(new Vector())
+	    }	    
+	    acts = new List()
+	    for i = 0,12 {
+		acts.append(new Vector())
+	    }	    
+	    inacts = new List()
+	    for i = 0,12 {
+		inacts.append(new Vector())
+	    }
+	}
+	
+	Gclamp = new IClamp(0.5)
+	Gclamp.del = 1
+	Gclamp.dur = 10
+	Gclamp.amp = 0
+    }
+    
+    
+    create dend[3]
+    for i=0,2 {
+	dend[i] {
+	    nseg = 10
+	    diam = 3
+	    L = 113
+	    Ra = 100
+	    celsius = 23
+	    
+	    insert Golgi_lkg
+	}
+	connect dend[i](0), soma(1)	
+    }
+    
+    
+    create axon
+    axon {
+	nseg = 100
+	diam = 2.4 // gives 90 pF to get to the 145 pF Forti06
+	L = 1200
+	Ra = 100
+	celsius = 23
+	
+	insert Golgi_lkg
+    }
+    
+    connect axon(0), soma(0)
+    
+    create elec,seal
+    elec {
+	nseg = 1
+	diam = 3
+	L = 1000
+	Ra = 36
+	cm = 0.0015
+	celsius = 23
+	EL_Vm.record(&v(0.5))
+
+    }
+        
+    seal {
+	nseg = 1
+	diam = 3
+	L = 1
+	Ra = 1
+	cm = 0.0001
+	celsius = 23
+	
+    }
+       
+    connect seal(1), soma(1)
+    connect elec(1), seal(0)
+    
+}
+
+
+func FR() {localobj v,v2
+    v = new Vector()
+    v2 = new Vector()
+    if (SpikeTrain.size()>1) {
+	v.deriv(SpikeTrain,1,1)
+	v2.resize(v.size())
+	v2.fill(1000)
+	v2.div(v)
+	return v2.mean()
+    }else {
+	return 0
+    }
+	
+}
+
+endtemplate Goc

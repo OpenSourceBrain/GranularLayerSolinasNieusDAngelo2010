@@ -1,0 +1,1217 @@
+// ******** Function library for network building ***********
+
+objref rndo, offset,fname
+rndo = new List()
+rndo.append(new Random(struct_rand))
+rndo.append(new Random(struct_rand+1))
+rndo.append(new Random(struct_rand+2))
+offset = new Vector(3)
+proc planarmap() { local i,Xb,Yb
+    // Arguments: 1 N,2 Step,3 prototype name,4 List name, 5 Origin, 6 rnd
+    strdef command
+    objref prototype
+    rndo.o(0).uniform(-$o2.x(0)*.5,$o2.x(0)*.5)
+    rndo.o(1).uniform(-$o2.x(1)*.5,$o2.x(1)*.5)
+    rndo.o(2).uniform(-$o2.x(2)*.5,$o2.x(2)*.5)
+    Xb = $o5.x(0)-($o2.x(0)*($o1.x(0)-1)/2)
+    Yb = $o5.x(1)-($o2.x(1)*($o1.x(1)-1)/2)
+    Zb = $o5.x(2)-($o2.x(2)*($o1.x(2)-1)/2)
+    
+    print "Netbuild"
+    $o1.printf
+    for k2=0, $o1.x(2)-1 { // loop along the transverse(X) axis
+	for k1=0,$o1.x(1)-1 {
+	    for k0=0,$o1.x(0)-1 {
+		sprint(command,"prototype = new %s(%d)",$s3,rec)
+		execute(command)
+		// print $o2.x(0)*k0+Xb,$o2.x(1)*k1+Yb,$o2.x(2)*k2+Zb
+		i = (k0+1)+(k1*$o1.x(0))+(k2*($o1.x(0)*$o1.x(1)))-1
+ 	sprint(command,"{%s.append(prototype)} {%s.o(%d).coord.x[0] = %g } {%s.o(%d).coord.x[1] = %g} {%s.o(%d).coord.x[2] = %g} {%s.o(%d).myself.append(%s.o(%d))}",$s4,$s4,i,$o2.x(0)*k0+Xb,$s4,i,$o2.x(1)*k1+Yb,$s4,i,$o2.x(2)*k2+Zb,$s4,i,$s4,i)
+ 	execute(command)
+	if ($6==1) {
+	    for j = 0,2 {offset.x[j] = rndo.o(j).repick()}
+	}else{
+	    for j = 0,2 {offset.x[j] = 0}
+	    }
+	sprint(command,"{%s.o(%d).coord.x[0] += offset.x[0]} {%s.o(%d).coord.x[1] += offset.x[1]} {%s.o(%d).coord.x[2] += offset.x[2]}",$s4,i,$s4,i,$s4,i)
+	execute(command)	
+    }}}
+}
+
+objref r, u
+r = new Random(100)
+u = new Random(20)
+proc seeds() {local i localobj ul
+    if ($2>0) {
+	ul = new Random($2)
+    }else {
+	ul = new Random()
+    }	
+    ul.uniform(0,173248)
+    for i=0, $o1.count()-1 { // glom's loop
+	$o1.o(i).Spiking.seed(ul.repick())
+    }
+}
+
+proc randomize() {local i localobj ul
+    // Arguments: list
+    if ($4>0) {
+	ul = new Random($4)
+    }else {
+	ul = new Random()
+    }	
+    ul.uniform($2-$3,$2+$3)
+    for i=0,$o1.count()-1 {
+	$o1.o(i).Spiking.start_background = ul.repick()
+    }
+}
+
+proc randomize_syn() {local i
+    // Arguments: list
+    u.normal($2,$3)
+    for i=0,$o1.count()-1 {
+	for s = 0,$o1.o(i).MF_AMPA_L.count()-1 {
+	    rnd_w = u.repick()
+	    while (rnd_w<$4 || rnd_w > $5) {rnd_w = u.repick()}
+	    // print rnd_w
+	    $o1.o(i).MF_AMPA_L.o(s).gmax_factor = rnd_w
+	    $o1.o(i).MF_NMDA_L.o(s).gmax_factor = rnd_w
+	}
+// 	if ($5) {
+// 	    for s = 0,$o1.o(i).GABA_L.count()-1 {
+// 		rnd_w = u.repick()
+// 		while (rnd_w<$4 || rnd_w > $5) {rnd_w = u.repick()}
+// 	    print rnd_w
+// 		$o1.o(i).GABA_L.o(s).gmax_factor = rnd_w
+// 	    }
+// 	}
+// 	else {
+// 	    for s = 0,$o1.o(i).GABA_L.count()-1 {
+// 	    rnd_w = u.repick()
+// 	    while (rnd_w<$4 || rnd_w > $5) {rnd_w = u.repick()}
+// 	    $o1.o(i).GABA_L.gmax_factor = rnd_w
+// 	}
+
+
+    }
+}
+
+
+proc bursting() {local i localobj ll
+    // Arguments:1 glom list, 2 Mode , 3 begin, 4 end, 5 origin, 6 radius, 7 Glom_stim file, 8 density 
+    //uniform(0,173248)
+    if ($2==0) {
+	print "Mode 0"
+	for i=$3, $4-1 { // glom's loop
+	    $o1.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0] // ms
+	    $o1.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+	    $o1.o(i).Spiking.IntraBurstNoise =       0 // >=0
+	    $o1.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+	    $o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+	    $o1.o(i).Spiking.start_background =      0 // ms
+	    $o1.o(i).Spiking.start_burst =           $o5.x[3] // ms
+	    $o1.o(i).Spiking.BackgroundNoise =       $o5.x[5] // >=0
+	    $o1.o(i).Spiking.tonic =                 $o5.x[4] // Hz
+	    
+	}
+    }
+    if ($2==1) {
+	print "Mode 1"
+	$o1.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0] // ms
+	$o1.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+	$o1.o(i).Spiking.IntraBurstNoise =       0 // >=0
+	$o1.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+	$o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+	$o1.o(i).Spiking.start_background =      1e9 // ms
+	$o1.o(i).Spiking.start_burst =           $o5.x[3] // ms
+	$o1.o(i).Spiking.BackgroundNoise =       $o5.x[4] // >=0
+	$o1.o(i).Spiking.tonic =                 10 // Hz
+    }
+    if ($2==2) { // Spacial region
+	print "Mode Origin"
+	sprint(command,"%s/%s",$s8,$s9)
+	fname = new File(command)
+	fname.wopen()
+	
+	if ($10 == 1) {
+	    for i = 0,$o1.count()-1 {
+		if (p2pdist3DO($o6,$o1.o(i),$7)) {
+		    $o1.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0]
+		    $o1.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+		    $o1.o(i).Spiking.IntraBurstNoise =       0 // >=0
+		    $o1.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+		    $o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+		    $o1.o(i).Spiking.start_background =      0 // ms
+		    $o1.o(i).Spiking.start_burst =           $o5.x[3] // ms
+		    $o1.o(i).Spiking.BackgroundNoise =       $o5.x[5] // >=0
+		    $o1.o(i).Spiking.tonic =                 $o5.x[4] // Hz		
+		    
+		    fname.printf("\t%d", i)
+		    
+		}
+	    }
+	}
+	if ($10 < 1) { // $10 is a probability
+	    u.uniform(0,1)
+	    for i = 0,$o1.count()-1 {
+		if (p2pdist3DO($o6,$o1.o(i),$7) && u.repick()<$10) {
+		    $o1.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0]
+		    $o1.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+		    $o1.o(i).Spiking.IntraBurstNoise =       0 // >=0
+		    $o1.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+		    $o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+		    $o1.o(i).Spiking.start_background =      0 // ms
+		    $o1.o(i).Spiking.start_burst =           $o5.x[3] // ms
+		    $o1.o(i).Spiking.BackgroundNoise =       $o5.x[5] // >=0
+		    $o1.o(i).Spiking.tonic =                 $o5.x[4] // Hz		
+		    
+		    fname.printf("\t%d", i)
+		    
+		}
+	    }
+	}
+	if ($10 > 1) { // $10 is an absolute integer
+	    ll = new List()
+	    for i = 0,$o1.count()-1 {
+		if (p2pdist3DO($o6,$o1.o(i),$7)) {ll.append($o1.o(i))}
+		if (ll.count()>$10) {
+		    while (ll.count()>$10) {ll.remove(u.discunif(0,ll.count()-1))}		    
+		}
+	    }
+	    for i = 0,ll.count()-1 {
+		ll.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0]
+		ll.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+		ll.o(i).Spiking.IntraBurstNoise =       0 // >=0
+		ll.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+		ll.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+		ll.o(i).Spiking.start_background =      0 // ms
+		ll.o(i).Spiking.start_burst =           $o5.x[3] // ms
+		ll.o(i).Spiking.BackgroundNoise =       $o5.x[5] // >=0
+		ll.o(i).Spiking.tonic =                 $o5.x[4] // Hz		
+		
+		fname.printf("\t%d", $o1.index(ll.o(i)))
+		
+	    }
+	}
+	fname.close()
+    }
+    if ($2==3) { // Spacial region
+	print "Mode Origin"
+	sprint(command,"%s/%s",$s8,$s9)
+	fname = new File(command)
+	fname.wopen()
+	
+	for i = 0,$o1.count()-1 {
+	    if (p2pdist2DO($o6,$o1.o(i),$7)) {
+		$o1.o(i).Spiking.IntraBurstInterval =    1e3/$o5.x[0]
+		$o1.o(i).Spiking.burst_len =             $o5.x[2] // # spikes
+		$o1.o(i).Spiking.IntraBurstNoise =       0 // >=0
+		$o1.o(i).Spiking.InterBurstInterval =    $o5.x[1] // ms
+		$o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+		$o1.o(i).Spiking.start_background =      0 // ms
+		$o1.o(i).Spiking.start_burst =           $o5.x[3] // ms
+		$o1.o(i).Spiking.BackgroundNoise =       $o5.x[5] // >=0
+		$o1.o(i).Spiking.tonic =                 $o5.x[4] // Hz		
+		
+		fname.printf("\t%d", i)
+		
+	    }
+	}
+    }
+    
+}
+
+strdef line,cmd
+
+
+obfunc LoadMat() { localobj  fil, M, W 
+/*    sprint(line,"echo -n `head -n1 %s | wc -w`",$s1)
+	print line
+    system(line,line)
+print line
+    sscanf(line, "%[^\n]", line)
+print line
+    sprint(cmd,"nline = %s",line)
+	print cmd
+    execute(cmd)
+*/
+    fil = new File()
+    fil.ropen($s1)
+//     cnt = 0
+//     while (!fil.eof()) {
+// 	cnt = cnt +1
+// 	fil.gets(line)
+//     }
+//     fil.seek()
+    M = new Matrix()
+    M.scanf(fil)
+    fil.close()
+    return M
+}
+
+proc bursting_jpg_rand() { localobj M,lmf,lrnd
+    // Arguments: 1 glom, 2 jpg.dat
+    M = LoadMat($s2)
+    lmf = new Vector($o1.count)
+    lmf.indgen(0,1)
+    lrnd = new Random(100)
+    for i = 0,M.getcol(0).size()-1 {
+	aa = lrnd.discunif(0,lmf.size-1)
+	print aa
+	if (M.x[i][0]>0) {
+	    $o1.o(lmf.x[aa]).Spiking.IntraBurstInterval =    int((1e3/($3 *M.x[i][0]))*10)/10
+	    if ($o1.o(lmf.x[aa]).Spiking.IntraBurstInterval > 15) {
+		$o1.o(lmf.x[aa]).Spiking.IntraBurstInterval = 15
+	    }
+	    $o1.o(lmf.x[aa]).Spiking.burst_len =            int($4 * M.x[i][0]) // # spikes
+	    $o1.o(lmf.x[aa]).Spiking.IntraBurstNoise =       0.2 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.InterBurstInterval =    1e5 // ms
+	    $o1.o(lmf.x[aa]).Spiking.InterBurstIntervalNoise = 0 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.start_background =      0 // ms
+	    $o1.o(lmf.x[aa]).Spiking.start_burst =          int(10 + M.x[i][1]) // ms
+	    $o1.o(lmf.x[aa]).Spiking.BackgroundNoise =       0.9 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.tonic =               $5 // Hz		
+	}else {
+	    $o1.o(lmf.x[aa]).Spiking.IntraBurstInterval =    100 //int(1e3/$3 *M.x[i][1])
+	    $o1.o(lmf.x[aa]).Spiking.burst_len =            int($4 * M.x[i][0]) // # spikes
+	    $o1.o(lmf.x[aa]).Spiking.IntraBurstNoise =       0.2 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.InterBurstInterval =    1e5 // ms
+	    $o1.o(lmf.x[aa]).Spiking.InterBurstIntervalNoise = 0 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.start_background =      0 // ms
+	    $o1.o(lmf.x[aa]).Spiking.start_burst =          1e6 //150 + M.x[i][2] // ms
+	    $o1.o(lmf.x[aa]).Spiking.BackgroundNoise =       0.9 // >=0
+	    $o1.o(lmf.x[aa]).Spiking.tonic =               $5 // Hz	
+	}
+	lmf.remove(aa)
+    }
+    
+}
+
+proc bursting_jpg() { localobj M
+    // Arguments: 1 glom, 2 jpg.dat
+    
+    M = LoadMat($s2)
+    for i = 0,M.getcol(0).size()-1 {
+	if (M.x[i][0]>0) {
+	    $o1.o(i).Spiking.IntraBurstInterval =    (1e3/($3 *M.x[i][0]))
+	    print (1e3/($3 *M.x[i][0]))
+// 	    if ($o1.o(i).Spiking.IntraBurstInterval > 15) {
+// 		$o1.o(i).Spiking.IntraBurstInterval = 15
+// 	    }
+
+$o1.o(i).Spiking.burst_len =            int($4 * M.x[i][0]) // # spikes
+	    $o1.o(i).Spiking.IntraBurstNoise =       0.2 // >=0
+	    $o1.o(i).Spiking.InterBurstInterval =    1e5 // ms
+	    $o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+	    $o1.o(i).Spiking.start_background =      0 // ms
+	    $o1.o(i).Spiking.start_burst =          int(10 + M.x[i][1]) // ms
+	    $o1.o(i).Spiking.BackgroundNoise =       0.9 // >=0
+	    $o1.o(i).Spiking.tonic =               $5 // Hz		
+	}else {
+	    $o1.o(i).Spiking.IntraBurstInterval =    100 //int(1e3/$3 *M.x[i][1])
+	    $o1.o(i).Spiking.burst_len =            int($4 * M.x[i][0]) // # spikes
+	    $o1.o(i).Spiking.IntraBurstNoise =       0.2 // >=0
+	    $o1.o(i).Spiking.InterBurstInterval =    1e5 // ms
+	    $o1.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+	    $o1.o(i).Spiking.start_background =      0 // ms
+	    $o1.o(i).Spiking.start_burst =          1e6 //150 + M.x[i][2] // ms
+	    $o1.o(i).Spiking.BackgroundNoise =       0.9 // >=0
+	    $o1.o(i).Spiking.tonic =               $5 // Hz	
+	}
+    }
+    
+}
+
+
+proc SetRD(){local i,j
+	for i=0,$o1.count()-1{
+	// 	for j=0,nrelsite-1{
+			$o1.o(i).SET_tdelay($2,$3)
+	//		syn_nmda_list.o(i*nrelsite+j).SET_tdelay($1,$2)	
+	//	}
+	}
+}
+
+// proc SetNumMfRs(){local i,j
+// 	if(syn_ampa_list.count()){syn_ampa_list.remove_all()}
+// 	if(syn_nmda_list.count()){syn_nmda_list.remove_all()}
+// 	nmossy=$1
+// 	nrelsite=$2
+// 	for i=0,nmossy-1{
+// 		for j=0,nrelsite-1{
+// 			syn_ampa_list.append(new Ampa(0.5))
+// 			syn_nmda_list.append(new Nmda(0.5))				
+// 			syn_ampa_list.o(i*nrelsite+j).gmax=Gampabar/nrelsite	
+// 			syn_nmda_list.o(i*nrelsite+j).gmax=Gnmdabar/nrelsite	
+// 		}
+// 	}
+// }
+
+// proc SetGmax(){local i,j
+// 	Gampabar=$1
+// 	Gnmdabar=$2
+// 	for i=0,nmossy-1{
+// 	 	for j=0,nrelsite-1{
+// 			syn_ampa_list.o(i*nrelsite+j).gmax=Gampabar/nrelsite
+// 			syn_nmda_list.o(i*nrelsite+j).gmax=Gnmdabar/nrelsite
+// 		}
+// 	}	
+// }
+
+
+func p2pdist() { local xydist
+    // Arguments: 1 object1,2 object2
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    xydist = sqrt(($o1.coord.x[0]-$o2.coord.x[0])^2 + ($o1.coord.x[1]-$o2.coord.x[1])^2)
+    return sqrt(xydist^2 + ($o1.coord.x[2]-$o2.coord.x[2])^2)
+}
+
+func p2pdist3D() { local response
+    // Arguments: 1 object1,2 object2
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    response = ($o1.coord.x[0]-$o2.coord.x[0] < $o3.x[0]) && ($o1.coord.x[1]-$o2.coord.x[1] < $o3.x[1]) && ($o1.coord.x[2]-$o2.coord.x[2] < $o3.x[2])
+    return response
+}
+
+func p2pdist3DO() { local response
+    // Arguments: 1 vector orgin, 2 object, 3 radius
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    response = sqrt(($o1.x[0]-$o2.coord.x[0])^2 + ($o1.x[1]-$o2.coord.x[1])^2 + ($o1.x[2]-$o2.coord.x[2])^2) < $3
+    return response
+}
+
+func p2pdist2DO() { local response
+    // Arguments: 1 vector orgin, 2 object, 3 radius
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    response = sqrt(($o1.x[0]-$o2.coord.x[0])^2 + ($o1.x[1]-$o2.coord.x[1])^2 ) < $3
+    return response
+}
+
+func p2pdist3D_out() { local response
+    // Arguments: 1 vector orgin, 2 object, 3 radius
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    response = sqrt(($o1.coord.x[0]-$o2.coord.x[0])^2 + ($o1.coord.x[1]-$o2.coord.x[1])^2 + ($o1.coord.x[2]-$o2.coord.x[2])^2)
+    return response
+}
+
+// func mutual_dist() { local flag, idx
+//     // Arguments: 1 gloms, 2 glom, 3 radius
+//     // Output: 0 if no other gloms are closer than radius to glom 
+//     //         1 otherwise
+//     flag = 0
+//     idx = 0
+//     while ( p2pdist($o1.o(idx),$o2) > 2*$3 && idx < $o1.count() ) {
+// 	idx = idx +1
+//     }
+//     if (p2pdist($o1.o(idx),$o2) <= 2*$3) {flag = 1}
+//     return flag
+// }
+
+// Append List1 to List2
+proc ListAppend() { local i
+    for i = 0, $o1.count()-1 {
+	$o2.append($o1.o(i))
+    }
+}
+
+proc glom2grc_connect() {local n , i, nsyn, rnd, idx localobj dist, dist_copy 
+    // Arguments: 1 destinations,2 sources,3 dendrite,  4 nsyn,5 nsyn_STD,6 lowbound,7 upbound
+    strdef command
+    dist = new Vector()
+    dist_copy = new Vector()
+    r.uniform(0,100)
+    r.ACG(12327, 98)
+    
+    u.normal($o3.x[0]*1e6,$o3.x[1]*1e6)
+    for i=0, $o1.count()-1 { // grc's loop
+	$o1.o(i).nears.remove_all()
+	dist.resize(0)
+	for j=0, $o2.count()-1 { // glom's loop
+	    dd = abs(p2pdist($o1.o(i),$o2.o(j)))
+	    if ( dd < $o3.x[3] ) {
+		// Store the grc to nears glomi dist
+		dist.append(dd)
+		$o1.o(i).nears.append($o2.o(j))
+	    }
+	}
+	rnd = int(r.repick())
+	if (rnd<$o4.x[1]) {
+	  nsyn = 4
+	}else{
+	    if (rnd<$o4.x[1]+$o4.x[3]) {
+	nsyn = 3
+	    }else{
+		nsyn = 5
+	    }
+	}
+	$o1.o(i).nears_glom.remove_all()
+	// print $o1.o(i).nears.count()
+	idx = 0
+	// Select nsyn glomi drawing the distance from the normal dist
+	for ns = 1,nsyn {
+	    rnd = u.repick()*1e-6
+	    while (rnd <= $o3.x[2] || rnd > $o3.x[3] ) rnd = u.repick()
+	    // print "rnd ",rnd
+	    dist_copy.copy(dist)
+	    // dist_copy.printf()
+	    // print dist_copy.sub(rnd).abs().min()
+	    idx = dist_copy.indwhere("==",dist_copy.sub(rnd).abs().min())
+	    // print idx
+	    $o1.o(i).nears_glom.append($o1.o(i).nears.o(idx))
+	    $o1.o(i).nears.remove(idx)
+//	    $o1.o(i).tmp.append(dist.x[idx])
+	    dist.remove(idx)
+	}
+// 	print "selected ", $o1.o(i).nears_glom.count()
+// 	print $o1.o(i).nears.count()
+// 	print $o1.o(i).tmp.size()
+// 	print dist.size()
+//	access $o1.o(i).soma
+	
+	for j=0, $o1.o(i).nears_glom.count()-1 {
+	    $o1.o(i).soma $o1.o(i).MF_AMPA_L.append(new GRANULE_Ampa_det_vi(0.5))
+	    $o1.o(i).soma $o1.o(i).MF_NMDA_L.append(new GRANULE_Nmda_det_vi(0.5))
+	    
+	    $o1.o(i).MF_AMPA_SL.append(new NetCon($o1.o(i).nears_glom.o(j).Spiking, $o1.o(i).MF_AMPA_L.o(j), -20, mf_grc_d, mf_grc_w))
+
+            $o1.o(i).MF_NMDA_SL.append(new NetCon($o1.o(i).nears_glom.o(j).Spiking, $o1.o(i).MF_NMDA_L.o(j), -20, mf_grc_d, mf_grc_w))
+
+            $o1.o(i).nears_glom.o(j).target_grcs.append($o1.o(i))
+	}
+	//SetRD($o1.o(i).MF_AMPA_L,1.033,0.223)
+	//SetRD($o1.o(i).MF_NMDA_L,1.033,0.223)
+	
+    }
+    for i=0,$o2.count()-1 store_farthest_glom($o2.o(i))
+    print "end glom2grc"
+}
+
+
+proc sort_list() {local i localobj vvd_sidx, sidx_L
+    // Arguments: 1 List, 2 Vector
+    vvd_sidx = new Vector(0)
+    vvd_sidx = $o2.sortindex()
+    sidx_L = new List()
+    for i = 0,vvd_sidx.size()-1 {
+	sidx_L.append($o1.o(vvd_sidx.x[i]))
+    }
+    $o1.remove_all()
+    for i = 0,sidx_L.count()-1 {
+	$o1.append(sidx_L.o(i))
+    }
+}
+
+proc goc2grc_connect() { local n,i,j,k,nglom, n_in_syn, idx, idx2 localobj vvd, u, lo_glomi
+    // Arguments: 1 Gloms,2 Gocs,3 GocAx, 4 GocCD, 5 GlomCD, 6 Grc dend length, 7 Netsize, 8 No doubleInh, 9 Mesh, 10 grc list
+    // goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3])
+    vvd = new Vector(0)
+    u = new Random()
+    strdef command
+    
+    u.discunif(0, $o2.count()-1)
+    if ($9) { // M.A.S.H. Golgi axons competitive growth
+	for i=0,$o10.count()-1 { // Grc loop
+	    for nd = 0,$o10.o(i).nears_glom.count()-1 {
+		rnd = u.repick()
+		while ($o2.o(rnd).targets.index($o10.o(i))!=-1 || $o2.o(rnd).targets.count()>40*GlomCD.x[0][0]) {
+		    print "Rernd ",rnd, "Goc ", $o2.o(rnd).targets.count(), " ", $o2.o(rnd).targets.index($o10.o(i))!=-1
+		    rnd = u.repick()
+		}
+		print "Goc ",rnd
+		$o2.o(rnd).targets.append($o10.o(i))
+	    	$o10.o(i).soma $o10.o(i).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+		n_in_syn = $o10.o(i).GABA_L.count()
+		$o2.o(rnd).soma $o10.o(i).GABA_SL.append(new NetCon(&v(0.5), $o10.o(i).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))	    
+	    }
+	}
+    }else {
+	for i=0, $o2.count()-1 { // source's loop: foreach Golgi
+	    // print " Goc ", i
+	    $o2.o(i).nears.remove_all()
+	    vvd.resize(0)
+	    // All gloms within  $o3 3D um
+	    for j=0, $o1.count()-1 { // destination's loop: all the gloms
+		// The glom should be within the Goc axon reach and not being inhibited already
+		if ( p2pdist3D($o1.o(j),$o2.o(i),$o3) && $o1.o(j).src_goc.count() < $o5.x[0][1] ) {
+		    $o2.o(i).nears.append($o1.o(j))
+		    vvd.append(p2pdist3D_out($o2.o(i), $o1.o(j)))
+		}
+	    }
+	    // Sort the nears from the closest to the fardest
+	    // print "Sort ",$o2.o(i).nears.count()
+	    sort_list($o2.o(i).nears,vvd)
+	    
+	    // print "GOc ", i ," glomi ", $o2.o(i).nears.count(), " Needed ", GocCD.x[0][2]
+	    // Select and connect target Gloms
+	    // Only gloms which are separated by more than $6 um are selected
+	    // this is made to avoid double inhbitory syns from a Goc to a grc
+	    // plus gloms receiving already from one goc are excluded
+	    // This means the Goc axons do not branch into a glomeruli 
+	    // if it has just branched inside a neaby one
+	    
+	    // Selectr randomly among the glomi?
+	    use_rand = 0
+	    j = 0
+	    while (j<GocCD.x[0][2] && $o2.o(i).nears.count() > 0) { // Select the needed number of glomi
+		// print "First round - Nears ",$o2.o(i).nears.count()
+		if (use_rand) {
+		    rnd = int(u.uniform(1, $o2.o(i).nears.count()))-1
+		}else {
+		    rnd = 0
+		}		    
+		target_idx = $o1.index($o2.o(i).nears.o(rnd))
+		if ($o2.o(i).target_glomi.count()==0) {
+		    //		print "Init"
+		    $o2.o(i).target_glomi.append($o1.o(target_idx))
+		    j = j + 1
+		} else {
+		    check = 1
+		    //		print "Filling"
+		    // If one of the glomi already selected is too close then skip this one
+		    for k = 0, $o2.o(i).target_glomi.count()-1 {
+			// print "Checking ", rnd, " ", target_idx
+			for h=0,$o2.o(i).target_glomi.o(k).siblings.count()-1 {
+			    //			print "sibling ",$o1.index($o2.o(i).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(i).nears.o(rnd))
+			    if ($o1.index($o2.o(i).target_glomi.o(k).siblings.o(h)) == target_idx ) {
+				//	print "Rejected"
+				check = $8
+			    }
+			}
+		    }
+		    //print "ckeck ", check
+		    if (check) {
+			// print "Accepted ", j, " ", (j<GocCD.x[0][2])
+			$o2.o(i).target_glomi.append($o1.o(target_idx))
+			j = j + 1
+		    }
+		}
+		$o2.o(i).nears.remove(rnd)
+	    }
+	    // print "Target Glomi ",$o2.o(i).target_glomi.count()
+	    
+	    
+	    
+	    /*
+	    // the div goc->glom is #Gocsyns / #gocsyns_per_glom
+	    // this still have to be randomized
+	    nglom = int($o4.x[0][2] / ( $o5.x[0][2] / $o5.x[0][1] ))
+	    print "nglom ",nglom
+	    if ( $o2.o(i).nears.count() < nglom ){print "Attenzione!! Goc axons too small!!!"}
+	    u.uniform(0,$o2.o(i).nears.count())		
+	    while ( $o2.o(i).nears.count() > nglom ) {
+		rnd = int(u.repick())
+		while ( rnd > $o2.o(i).nears.count()-1 ) { rnd = int(u.repick())}
+		$o2.o(i).nears.remove(rnd)
+	    }
+	    */
+	    // loop among the selected gloms
+	    $o2.o(i).targets.remove_all()
+	    for j=0, $o2.o(i).target_glomi.count()-1 { 
+		// print j, " ",i
+		// let the glom(j) from which gocs it receives
+		$o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
+		// get the list of targetted grc by glom(j)
+		// which is the target list for the goc(i)
+		targ = $o2.o(i).targets.count()
+		// print targ
+		ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
+		
+		// 	    // rduce it by a fraction
+		// 	    ngrcdends = $o2.o(i).targets.count() * $o5.x[0][3]
+		// 	    u.uniform(0,$o2.o(i).targets.count())
+		// 	    while ( $o2.o(i).targets.count() > ngrcdends ) {
+		// 		rnd = int(u.repick())
+		// 		while ( rnd > $o2.o(i).targets.count()-1 ) { rnd = int(u.repick())}
+		// 		$o2.o(i).targets.remove(rnd)
+		// 	    }
+ 		// loop among the target grcs
+		//	    access $o2.o(i).soma
+ 		for k=targ, $o2.o(i).targets.count()-1 { 
+		    // print "k ",k," ",j," ", i
+		    // Add the synapse in the target grc
+		    $o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+		    //		sprint(command,"{syn = new GRANULE_Gaba_det_vi(0.5)} {GABA_L.append(syn)}")
+		    //		execute(command,$o2.o(i).targetss.o(k))
+		    n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
+		    
+		    $o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))
+		    
+		    //		print "pre",$o2.o(i).targets.o(k).GABA_SL.o($o2.o(i).targets.o(k).GABA_SL.count()-1).precell
+		    //		print "post",$o2.o(i).targets.o(k).GABA_SL.o($o2.o(i).targets.o(k).GABA_SL.count()-1).postcell
+		}
+	    }
+	}
+	
+	// Here we add new Gocs to provide inhibition to the leftover glomi
+	set_goc = $o2.count()
+	lo_glomi = new List()
+	// print "Second round - Leftover glomi ",lo_glomi.count()
+	for k= 0,$o1.count()-1 {
+	    if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
+		lo_glomi.append($o1.o(k))
+	    }
+	}
+	// print "Second round - Leftover glomi ",lo_glomi.count()
+	
+	while (lo_glomi.count()>0) {
+	    // add an extra Goc
+	    $o2.append(new Goc(rec))
+	    c = $o2.count()-1
+	    rndo.o(0).uniform(-$o7.x[0][0]*.5,$o7.x[0][0]*.5)
+	    rndo.o(1).uniform(-$o7.x[0][1]*.5,$o7.x[0][1]*.5)
+	    rndo.o(2).uniform(-$o7.x[0][2]*.5,$o7.x[0][2]*.5)
+	    $o2.o(c).coord.x[0] = rndo.o(0).repick()
+	    $o2.o(c).coord.x[1] = rndo.o(1).repick()
+	    $o2.o(c).coord.x[2] = rndo.o(2).repick()
+	    // print " Total number of Gocs: ", $o2.count()
+	    
+	    vvd.resize(0)
+	    // select as much glomi as possible
+	    // All gloms within  $o3 3D um
+	    // print " Nears ", c
+	    for j=0, lo_glomi.count()-1 { // destination's loop: all the left over glomi
+		// The glom should be within the Goc axon reach and not being inhibited already
+		// print j, " ",lo_glomi.o(j).src_goc.count() < $o5.x[0][1], " ", p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3), " ", lo_glomi.count() < GocCD.x[0][2], " ",lo_glomi.count()
+		if ( lo_glomi.o(j).src_goc.count() < $o5.x[0][1] && (p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3) || lo_glomi.count() < GocCD.x[0][2]) ) {
+		    $o2.o(c).nears.append(lo_glomi.o(j))
+		    vvd.append(p2pdist3D_out(lo_glomi.o(j),$o2.o(c)))
+		}
+	    }
+	    // Sort the nears from the closest to the fardest
+	    sort_list($o2.o(c).nears,vvd)
+	    
+	    // print "GoC ",c," Nears ",$o2.o(c).nears.count()
+	    while ($o2.o(c).nears.count()>0 && $o2.o(c).target_glomi.count()<GocCD.x[0][2] ) { // Select the needed number of glomi
+		if (use_rand) {
+		    rnd = int(u.uniform(1, $o2.o(c).nears.count()))-1
+		}else {
+		    rnd = 0
+		}		    
+		// print "Nears ",$o2.o(c).nears.count(), " ",rnd
+		if ($o2.o(c).target_glomi.count()==0) {
+		    //print "Init "
+		    $o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
+		    lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+		} else {
+		    check = 1
+		    //print "Filling"
+		    // If one of the glomi already selected is too close then skip this one
+		    for k = 0, $o2.o(c).target_glomi.count()-1 {
+			//		    print "Checking ", rnd
+			for h=0,$o2.o(c).target_glomi.o(k).siblings.count()-1 {
+			    //print "sibling ",$o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(c).nears.o(rnd))
+			    if ($o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)) == $o1.index($o2.o(c).nears.o(rnd))) {
+				//	print "Rejected"
+				check = $8
+			    }
+			}
+		    }
+		    //print "ckeck ", check
+		    if (check) {
+			// print "Accepted ", j, " ", (j<GocCD.x[0][2]), " ",rnd
+			$o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
+			lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+		    }
+		}
+		//print "glom to rem from lo_glomi ", lo_glomi.index($o2.o(c).nears.o(rnd)), " " , $o2.o(c).nears.o(rnd)
+		$o2.o(c).nears.remove(rnd)
+	    }
+	    // print "LO glomi ", lo_glomi.count()
+	    //print $o2.o(c).target_glomi.count()
+	}
+	// loop among the added gloms
+	for i = set_goc,$o2.count()-1 {
+	    $o2.o(i).targets.remove_all()
+	    for j=0, $o2.o(i).target_glomi.count()-1 { 
+		$o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
+		// get the list of targetted grc by glom(j)
+		// which is the target list for the goc(i)
+		targ = $o2.o(i).targets.count()
+		ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
+ 		for k=targ, $o2.o(i).targets.count()-1 { 
+		    // Add the synapse in the target grc
+		    $o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+		    n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
+		    
+		    $o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))	    
+		}
+	    }
+	}
+	lo_glomi.remove_all()
+	for k= 0,$o1.count()-1 {
+	    if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
+		lo_glomi.append($o1.o(k))
+	    }
+	}
+	// print "Lo glomi ", lo_glomi.count()
+	// print "Golgi ", $o2.count()
+    }	
+}
+
+proc goc2grc_connect_comp() { local n,i,j,k,nglom, n_in_syn, idx, idx2 localobj vvd, u, lo_glomi
+    // Arguments: 1 Gloms,2 Gocs,3 GocAx, 4 GocCD, 5 GlomCD, 6 Grc dend length, 7 Netsize, 8 Mesh
+    // goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3])
+    vvd = new Vector(0)
+    u = new Random()
+    strdef command
+    
+    // Populate the nears Lists in each Goc
+    for i=0, $o2.count()-1 { // loop foreach Golgi
+	// print " Goc ", i
+	$o2.o(i).nears.remove_all()
+	vvd.resize(0)
+	// All gloms within  $o3 3D um
+	for j=0, $o1.count()-1 { // destination's loop: all the gloms
+	    // The glom should be within the Goc axon reach and not being inhibited already
+	    if ( p2pdist3D($o1.o(j),$o2.o(i),$o3) && $o1.o(j).src_goc.count() < $o5.x[0][1] ) {
+		$o2.o(i).nears.append($o1.o(j))
+		vvd.append(p2pdist3D_out($o2.o(i), $o1.o(j)))
+	    }
+	}
+	// Sort the nears from the closest to the fardest
+	// print "Sort ",$o2.o(i).nears.count()
+	sort_list($o2.o(i).nears,vvd)
+    }
+    
+    // print "GOc ", i ," glomi ", $o2.o(i).nears.count(), " Needed ", GocCD.x[0][2]
+    // Select and connect target Gloms
+    // Only gloms which are separated by more than $6 um are selected
+    // this is made to avoid double inhbitory syns from a Goc to a grc
+    // plus gloms receiving already from one goc are excluded
+    // This means the Goc axons do not branch into a glomeruli 
+    // if it has just branched inside a neaby one
+    
+    // Select randomly among the glomi?
+    use_rand = 0
+    j = 0
+    while (j<GocCD.x[0][2]) { // Select the needed number of glomi
+	for i=0, $o2.count()-1 { // source's loop: foreach Golgi
+	    // print "First round - Nears ",$o2.o(i).nears.count()
+	    if ($o2.o(i).nears.count()>0) {
+		if (use_rand) {
+		    rnd = int(u.uniform(1, $o2.o(i).nears.count()))-1
+		}else {
+		    rnd = 0
+		}		    
+		target_idx = $o1.index($o2.o(i).nears.o(rnd))
+		
+		if ($o2.o(i).target_glomi.count()==0) {
+		    //		print "Init"
+		    $o2.o(i).target_glomi.append($o1.o(target_idx))
+		    j = j + 1
+		} else {
+		    check = 1
+		    //		print "Filling"
+		    // If one of the glomi already selected is too close then skip this one
+		    for k = 0, $o2.o(i).target_glomi.count()-1 {
+			// print "Checking ", rnd, " ", target_idx
+			for h=0,$o2.o(i).target_glomi.o(k).siblings.count()-1 {
+			    //			print "sibling ",$o1.index($o2.o(i).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(i).nears.o(rnd))
+			    if ($o1.index($o2.o(i).target_glomi.o(k).siblings.o(h)) == target_idx ) {
+				//	print "Rejected"
+				check = $8
+			    }
+			}
+		    }
+		    print "ckeck ", check
+		    if (check) {
+			// print "Accepted ", j, " ", (j<GocCD.x[0][2])
+			$o2.o(i).target_glomi.append($o1.o(target_idx))
+			j = j + 1
+		    }
+		}
+		// $o2.o(i).nears.remove(rnd)
+		for kk=0, $o2.count()-1 { // source's loop: foreach Golgi
+		    if ($o2.o(kk).nears.index($o2.o(i).nears.o(rnd))!=-1) {
+			print "Removing ",$o2.o(kk).nears.index($o2.o(i).nears.o(rnd)), " from Goc nears ",kk
+			$o2.o(kk).nears.remove($o2.o(kk).nears.index($o2.o(i).nears.o(rnd)))
+		    }
+		}
+	    }
+	    print "Goc ", i, " ",$o2.o(i).target_glomi.count(), " nears ", $o2.o(i).nears.count(), j
+	}
+    }
+    // print "Target Glomi ",$o2.o(i).target_glomi.count()
+    
+    
+    
+    /*
+    // the div goc->glom is #Gocsyns / #gocsyns_per_glom
+    // this still have to be randomized
+    nglom = int($o4.x[0][2] / ( $o5.x[0][2] / $o5.x[0][1] ))
+    print "nglom ",nglom
+    if ( $o2.o(i).nears.count() < nglom ){print "Attenzione!! Goc axons too small!!!"}
+    u.uniform(0,$o2.o(i).nears.count())		
+    while ( $o2.o(i).nears.count() > nglom ) {
+	rnd = int(u.repick())
+	while ( rnd > $o2.o(i).nears.count()-1 ) { rnd = int(u.repick())}
+	$o2.o(i).nears.remove(rnd)
+    }
+    */
+    for i=0, $o2.count()-1 { // source's loop: foreach Golgi
+	
+	// loop among the selected gloms
+	$o2.o(i).targets.remove_all()
+	for j=0, $o2.o(i).target_glomi.count()-1 { 
+	    // print j, " ",i
+	    // let the glom(j) from which gocs it receives
+	    $o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
+	    // get the list of targetted grc by glom(j)
+	    // which is the target list for the goc(i)
+	    targ = $o2.o(i).targets.count()
+	    // print targ
+	    ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
+	    
+	    // 	    // rduce it by a fraction
+	    // 	    ngrcdends = $o2.o(i).targets.count() * $o5.x[0][3]
+	    // 	    u.uniform(0,$o2.o(i).targets.count())
+	    // 	    while ( $o2.o(i).targets.count() > ngrcdends ) {
+	    // 		rnd = int(u.repick())
+	    // 		while ( rnd > $o2.o(i).targets.count()-1 ) { rnd = int(u.repick())}
+	    // 		$o2.o(i).targets.remove(rnd)
+	    // 	    }
+ 	    // loop among the target grcs
+	    //	    access $o2.o(i).soma
+ 	    for k=targ, $o2.o(i).targets.count()-1 { 
+		// print "k ",k," ",j," ", i
+		// Add the synapse in the target grc
+		$o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+		//		sprint(command,"{syn = new GRANULE_Gaba_det_vi(0.5)} {GABA_L.append(syn)}")
+		//		execute(command,$o2.o(i).targetss.o(k))
+		n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
+		
+		$o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))
+		
+		//		print "pre",$o2.o(i).targets.o(k).GABA_SL.o($o2.o(i).targets.o(k).GABA_SL.count()-1).precell
+		//		print "post",$o2.o(i).targets.o(k).GABA_SL.o($o2.o(i).targets.o(k).GABA_SL.count()-1).postcell
+	    }
+	}
+    }
+    
+    
+    // Here we add new Gocs to provide inhibition to the leftover glomi
+    set_goc = $o2.count()
+    lo_glomi = new List()
+    // print "Second round - Leftover glomi ",lo_glomi.count()
+    for k= 0,$o1.count()-1 {
+	if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
+	    lo_glomi.append($o1.o(k))
+	}
+    }
+    // print "Second round - Leftover glomi ",lo_glomi.count()
+    
+    while (lo_glomi.count()>0) {
+	// add an extra Goc
+	$o2.append(new Goc(0))
+	c = $o2.count()-1
+	rndo.o(0).uniform(-$o7.x[0][0]*.5,$o7.x[0][0]*.5)
+	rndo.o(1).uniform(-$o7.x[0][1]*.5,$o7.x[0][1]*.5)
+	rndo.o(2).uniform(-$o7.x[0][2]*.5,$o7.x[0][2]*.5)
+	$o2.o(c).coord.x[0] = rndo.o(0).repick()
+	$o2.o(c).coord.x[1] = rndo.o(1).repick()
+	$o2.o(c).coord.x[2] = rndo.o(2).repick()
+	// print " Total number of Gocs: ", $o2.count()
+	
+	vvd.resize(0)
+	// select as much glomi as possible
+	// All gloms within  $o3 3D um
+	// print " Nears ", c
+	for j=0, lo_glomi.count()-1 { // destination's loop: all the left over glomi
+	    // The glom should be within the Goc axon reach and not being inhibited already
+	    // print j, " ",lo_glomi.o(j).src_goc.count() < $o5.x[0][1], " ", p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3), " ", lo_glomi.count() < GocCD.x[0][2], " ",lo_glomi.count()
+	    if ( lo_glomi.o(j).src_goc.count() < $o5.x[0][1] && (p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3) || lo_glomi.count() < GocCD.x[0][2]) ) {
+		$o2.o(c).nears.append(lo_glomi.o(j))
+		vvd.append(p2pdist3D_out(lo_glomi.o(j),$o2.o(c)))
+	    }
+	}
+	// Sort the nears from the closest to the fardest
+	sort_list($o2.o(c).nears,vvd)
+	
+	// print "GoC ",c," Nears ",$o2.o(c).nears.count()
+	while ($o2.o(c).nears.count()>0 && $o2.o(c).target_glomi.count()<GocCD.x[0][2] ) { // Select the needed number of glomi
+	    if (use_rand) {
+		rnd = int(u.uniform(1, $o2.o(c).nears.count()))-1
+	    }else {
+		rnd = 0
+	    }		    
+	    // print "Nears ",$o2.o(c).nears.count(), " ",rnd
+	    if ($o2.o(c).target_glomi.count()==0) {
+		//print "Init "
+		$o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
+		lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+	    } else {
+		check = 1
+		//print "Filling"
+		// If one of the glomi already selected is too close then skip this one
+		for k = 0, $o2.o(c).target_glomi.count()-1 {
+		    //		    print "Checking ", rnd
+		    for h=0,$o2.o(c).target_glomi.o(k).siblings.count()-1 {
+			//print "sibling ",$o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(c).nears.o(rnd))
+			if ($o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)) == $o1.index($o2.o(c).nears.o(rnd))) {
+			    //	print "Rejected"
+			    check = $8
+			}
+		    }
+		}
+		//print "ckeck ", check
+		if (check) {
+		    // print "Accepted ", j, " ", (j<GocCD.x[0][2]), " ",rnd
+		    $o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
+		    lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+		}
+	    }
+	    //print "glom to rem from lo_glomi ", lo_glomi.index($o2.o(c).nears.o(rnd)), " " , $o2.o(c).nears.o(rnd)
+	    $o2.o(c).nears.remove(rnd)
+	}
+	// print "LO glomi ", lo_glomi.count()
+	//print $o2.o(c).target_glomi.count()
+    }
+    // loop among the added gloms
+    for i = set_goc,$o2.count()-1 {
+	$o2.o(i).targets.remove_all()
+	for j=0, $o2.o(i).target_glomi.count()-1 { 
+	    $o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
+	    // get the list of targetted grc by glom(j)
+	    // which is the target list for the goc(i)
+	    targ = $o2.o(i).targets.count()
+	    ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
+ 	    for k=targ, $o2.o(i).targets.count()-1 { 
+		// Add the synapse in the target grc
+		$o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+		n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
+		
+		$o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))	    
+	    }
+	}
+    }
+    lo_glomi.remove_all()
+    for k= 0,$o1.count()-1 {
+	if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
+	    lo_glomi.append($o1.o(k))
+	}
+    }
+    // print "Lo glomi ", lo_glomi.count()
+    // print "Golgi ", $o2.count()
+    
+}
+
+proc grc2goc_connect() {local n,i,nsyn, rnd
+    // Arguments: 1 destinations,2 sources,  3 GrcPF,  4 Gocdend, 5 GocCD, 6 GrcCD, 7 MLI prob
+    strdef command
+    r.normal($o5.x[0],$o5.x[1]^2)
+    for i=0, $o1.count()-1 { // goc's loop
+	$o1.o(i).nears.remove_all()	
+	
+	// print "Goc ",i,$o1.o(i).MF_AMPA_SL.count()
+	for j=0, $o2.count()-1 { // grc's loop
+	    if ( abs($o1.o(i).coord.x[0]-$o2.o(j).coord.x[0])< $o4.x[0] && abs($o1.o(i).coord.x[1]-$o2.o(j).coord.x[1]) < $o4.x[1] ) {
+		$o1.o(i).nears.append($o2.o(j))
+	    }
+	}
+	
+	// print $o1.o(i),"\tGrcs_nears: ", $o1.o(i).nears.count()
+	nsyn = int(r.repick())
+	// print "nsyn ",nsyn, " "
+	if ( nsyn < $o5.x[2] ) {nsyn=$o5.x[2]}
+	if ( nsyn > $o5.x[3] ) {nsyn=$o5.x[3]}
+	// print "nsyn ",nsyn 
+	u.uniform(0,$o1.o(i).nears.count())
+	while ( $o1.o(i).nears.count()>nsyn ) {
+	    rnd = rnd = int(u.repick())
+	    while ( rnd > $o1.o(i).nears.count()-1 ) { rnd = int(u.repick())}
+	    $o1.o(i).nears.remove(rnd)
+	}
+// 	access $o1.o(i).soma
+	// print "connect"
+	for j=0, $o1.o(i).nears.count()-1 {
+	    
+	    $o1.o(i).soma $o1.o(i).PF_AMPA_L.append(new GRANULE_Ampa_det_vi(0.5))
+	    $o1.o(i).PF_AMPA_L.o($o1.o(i).PF_AMPA_L.count()-1).U = 0.1
+ 	    $o1.o(i).PF_AMPA_L.o($o1.o(i).PF_AMPA_L.count()-1).diffuse = 0
+	    $o1.o(i).PF_AMPA_L.o($o1.o(i).PF_AMPA_L.count()-1).gmax = 12000
+	    
+	    $o1.o(i).soma $o1.o(i).PF_NMDA_L.append(new GRANULE_Nmda_det_vi(0.5))
+	    $o1.o(i).PF_NMDA_L.o($o1.o(i).PF_NMDA_L.count()-1).U = 0.1
+	    $o1.o(i).PF_NMDA_L.o($o1.o(i).PF_NMDA_L.count()-1).gmax = 18800*8
+	    
+	    $o1.o(i).soma $o1.o(i).PF_KAIN_L.append(new GRANULE_Ampa_det_vi(0.5))
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).U = 0.1
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).Cdur = 5
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).T = 0.3/5
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).r1FIX = 0.1
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).r2 = 0.01
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).r6FIX = 0.1
+	    $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1).gmax = 19000/20 
+ 	    // print "Grc ",$o1.o(i).nears.o(j)
+	    // 	    print "Grc ",$o1.o(i).nears.o(j).targets.count()
+	    // 	    	    print "SynA " ,i,j
+	    // 	    $o1.o(i).soma $o1.o(i).PF_AMPA_L.append(new AMPA_PF_GO_nodiff(0.5))
+	    // 	    $o1.o(i).soma $o1.o(i).PF_NMDA_L.append(new NMDA_PF_GO(0.5))
+	    // 	    $o1.o(i).soma $o1.o(i).PF_KAIN_L.append(new KAINATE_PF_GO_nodiff(0.5))
+	    
+	    //     	    print "Syn " ,i,j,$o1.o(i).PF_AMPA_L.count()
+	    
+	    // print "source ",$o1.o(i).nears.o(j)
+	    // print "source vm ",$o1.o(i).nears.o(j).soma.v(0.5)
+	    // print "targets ",$o1.o(i).PF_AMPA_L.o(j)
+	    
+	    // print "pre ",$o1.o(i).PF_AMPA_SL.count()
+	    $o1.o(i).nears.o(j).soma $o1.o(i).PF_AMPA_SL.append(new NetCon(&v(0.5), $o1.o(i).PF_AMPA_L.o($o1.o(i).PF_AMPA_L.count()-1), -20, 1, 0))
+	    // print "post ",$o1.o(i).PF_AMPA_SL.count()
+	    $o1.o(i).nears.o(j).soma $o1.o(i).PF_NMDA_SL.append(new NetCon(&v(0.5), $o1.o(i).PF_NMDA_L.o($o1.o(i).PF_NMDA_L.count()-1), -20, 1, 0))
+	    $o1.o(i).nears.o(j).soma $o1.o(i).PF_KAIN_SL.append(new NetCon(&v(0.5), $o1.o(i).PF_KAIN_L.o($o1.o(i).PF_KAIN_L.count()-1), -20, 1, 0))
+	    
+	    //print "pre ",$o1.o(i).PF_AMPA_SL$o1.o(i).nears.o(j).targets.count()
+    	    $o1.o(i).nears.o(j).targets.append($o1.o(i))
+	    //print "prost ",$o1.o(i).PF_AMPA_SL $o1.o(i).nears.o(j).targets.count()
+	}
+	
+	// Connect grc to Goca as MLI with probability $7
+	$o1.o(i).soma $o1.o(i).MLI_L.append(new Golgi_PF_AMPA(0.5))
+	$o1.o(i).MLI_L.o($o1.o(i).MLI_L.count()-1).e = -60
+	
+	if ($7>0) {
+	    if ( $7<1 ) {
+		u.uniform(0,1)
+		for igrc = 0,$o2.count()-1 {
+		    if ( u.repick() < $7 ) {
+			$o2.o(igrc).soma $o1.o(i).MLI_SL.append(new NetCon(&v(0.5), $o1.o(i).MLI_L.o($o1.o(i).MLI_L.count()-1), -20, 3, 4000))		
+		    }
+		}
+	    }else {
+		u.uniform(0,$o2.count()-1)
+		while ($o1.o(i).MLI_L.count()<$7) {
+		    $o2.o(u.repick()).soma $o1.o(i).MLI_SL.append(new NetCon(&v(0.5), $o1.o(i).MLI_L.o($o1.o(i).MLI_L.count()-1), -20, 3, 4000))		
+		}
+	    }
+	}
+	// print i, $o1.o(i).PF_AMPA_L.count()-1
+	//	SetRD($o1.o(i).PF_NMDA_L,1.033,0.223)	
+    }
+print "end"
+}
+
+proc glom2goc_connect() {local n,i,j,k,nsyn, n_in_syn, rnd localobj vvd
+    // Arguments: 1 Gocs,2 Gloms,3 Gocdend,4 GocCD,5 GlomCD
+    vvd = new Vector(0)
+    strdef command
+    r.normal($o4.x[0][1],$o4.x[1][1]^2)
+    for i=0, $o1.count()-1 { // Goc's loop
+	$o1.o(i).nears.remove_all()
+	vvd.resize(0)
+
+	// print $o2.count()
+	for j=0, $o2.count()-1 { // Glom's loop
+	    // print p2pdist($o1.o(i),$o2.o(j))
+	    if ( p2pdist($o1.o(i),$o2.o(j)) < $o3.x[3] ) {
+		// select the Gloms within the radim of the basal dendrite
+		$o1.o(i).nears.append($o2.o(j)) 
+		vvd.append(p2pdist3D_out($o1.o(i),$o2.o(j)))
+	    }
+	}
+	// Sort the nears from the closest to the fardest
+	sort_list($o1.o(i).nears,vvd)
+	
+	// print $o1.o(i).nears.count()
+	nsyn = int(r.repick())
+	if ( nsyn < $o4.x[2][1] ) {nsyn=$o4.x[2][1]}
+	if ( nsyn > $o4.x[3][1] ) {nsyn=$o4.x[3][1]}
+	// nsyn within the bounds
+ 	// print "Goc ", i, " ", nsyn
+	u.normal(0,$o1.o(i).nears.count()/3)
+	// u.normal(0,20)
+	while ( $o1.o(i).source_glm.count()<nsyn ) {
+	    rnd = int(u.normal(0,$o1.o(i).nears.count()/3))
+	    while ( rnd > $o1.o(i).nears.count()-1 || rnd < 0 ) { rnd = int(u.repick())}
+	    // print "Glom ", rnd
+ 	    $o1.o(i).source_glm.append($o1.o(i).nears.o(rnd))
+	    $o1.o(i).nears.remove(rnd)
+	}
+	//	access $o1.o(i).soma
+	//	print $o1.o(i)
+	// print $o1.o(i), $o1.o(i).MF_AMPA_L.count()
+	// print $o1.o(i).nears.count()
+ 	for j=0, $o1.o(i).source_glm.count()-1 {
+	    //	    print "ciao"
+	    // 	print $o1.o(i).MF_AMPA_L.count()
+	    $o1.o(i).soma $o1.o(i).MF_AMPA_L.append(new GRANULE_Ampa_det_vi(0.5))
+	    $o1.o(i).MF_AMPA_L.o($o1.o(i).MF_AMPA_L.count()-1).gmax = 2200
+	    // 	print $o1.o(i).MF_AMPA_L.count()
+ 	    $o1.o(i).soma $o1.o(i).MF_NMDA_L.append(new GRANULE_Nmda_det_vi(0.5))
+	    $o1.o(i).MF_NMDA_L.o($o1.o(i).MF_NMDA_L.count()-1).gmax = 46500
+ 	    n_in_syn = $o1.o(i).MF_AMPA_L.count()
+// 	    print "n_in_syn ", n_in_syn
+// 	    print $o1.o(i).MF_AMPA_L.o(n_in_syn-1)
+// 	    print $o1.o(i).nears.count()
+// 	    print i,j
+// 	    print $o1.o(i).nears.o(j)
+// 	    print $o1.o(i).nears.o(j).Spiking
+// 	    print $o1.o(i).nears.o(j).Spiking
+// 	    print $o1.o(i), $o1.o(i).MF_AMPA_L
+ 	    $o1.o(i).MF_AMPA_SL.append(new NetCon($o1.o(i).source_glm.o(j).Spiking, $o1.o(i).MF_AMPA_L.o(n_in_syn-1), -20, mf_grc_d, 0))
+ 	    $o1.o(i).MF_NMDA_SL.append(new NetCon($o1.o(i).source_glm.o(j).Spiking, $o1.o(i).MF_NMDA_L.o(n_in_syn-1), -20, mf_grc_d, 0))
+	    $o1.o(i).source_glm.o(j).target_gocs.append($o1.o(i))
+	}
+	
+	//SetRD($o1.o(i).MF_AMPA_L,1.033,0.223)
+	//SetRD($o1.o(i).MF_NMDA_L,1.033,0.223)
+// print "end"
+    }
+}
+
+// proc s2dconnect() { local j, src_flag
+//     strdef lname, command
+//     src_flag = 0
+//     // Devo raggurppa le synapsi
+//     if ( !strcmp($s2,"GRANULE_Ampa_det_vi") ) {lname="MF_AMPA_L" src_flag = 1}
+//     if ( !strcmp($s2,"GRANULE_Nmda_det_vi") ) {lname="MF_NMDA_L"}
+//     if ( !strcmp($s2,"GRANULE_Gaba_det_vi") ) {lname="GABA_L" src_flag = 1}
+//     if ( !strcmp($s2,"AMPA_PF_GO_nodiff") ) {lname="PF_AMPA_L" src_flag = 1}
+//     if ( !strcmp($s2,"NMDA_PF_GO_df") ) {lname="PF_NMDA_L"}
+//     if ( !strcmp($s2,"KAINATE_PF_GO_nodiff") ) {lname="PF_KAIN_L"}
+//     if ( !strcmp($s2,"AMPA_MF_GO") ) {lname="MF_AMPA_L" src_flag = 1}
+//     if ( !strcmp($s2,"NMDA_MF_GO") ) {lname="MF_NMDA_L"}
+    
+//     for j=0, $o1.nears.count()-1 {
+// 	sprint(command,"{syn = new %s(0.5)} {%s.append(syn)}",$s2,lname)
+// 	execute(command,$o1)
+// 	sprint(command,"conn = new NetCon(nears.o(%d).Spiking, %s.o(%d), -20, 0.000, 1e-3)",j,lname,j)
+// 	execute(command,$o1)
+// 	if ( src_flag ) {
+// 	    sprint(command,"nears.o(%d).targets.append(myself.o(0))",j)
+// 	    execute(command,$o1)
+// 	}
+//     }
+// }
+
+proc setgmax_goc() {
+    // Arguments: CellList, corrVector
+    for i = 0, $o1.count()-1 {
+	for j = 0, $o1.o(i).PF_AMPA_L.count()-1 {
+	    //	    goc.o(2).PF_AMPA_L.o(10).gmax 
+	    $o1.o(i).PF_AMPA_L.o(j).gmax = $o1.o(i).PF_AMPA_L.o(j).gmax * $o2.x[0]
+	    $o1.o(i).PF_NMDA_L.o(j).gmax = $o1.o(i).PF_AMPA_L.o(j).gmax * $o2.x[0]
+	    $o1.o(i).PF_KAIN_L.o(j).gmax = $o1.o(i).PF_AMPA_L.o(j).gmax * $o2.x[0]
+	}
+    }
+    
+}
+
+// proc setgmax_grc() {
+//     // Arguments: CellList, corrVector
+//     for i = 0, $o1.count()-1 {
+// 	for j = 0, $o1.o(i).GABA_L.count()-1 {
+// 	    $o1.o(i).GABA_L.o(j).gmax = $o1.o(i).GABA_L.o(j).gmax * $o2.x[1]
+// 	}
+//     }
+// }
+
+//proc prune_cells() {
+    // Arguments: cellelist
+    // remove the cell no giving out synapses
+    

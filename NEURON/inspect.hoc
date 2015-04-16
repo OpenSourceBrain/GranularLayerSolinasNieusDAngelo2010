@@ -1,0 +1,187 @@
+objref fl, vv
+strdef fn
+
+proc Div () { local i, cnt
+    // Arguments: 1 cell list 2 filename 3 destdir, 4 goc target glomi
+    cnt = 0
+    
+    // output cell number, #outgoing_syns
+    sprint(fn,"%s/div_%s.lst",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    print "Cell List: ",$o1
+    for i=0,$o1.count()-1 {
+	// 	print "Cell: ",$o1.object(i),"\tTargets: ",$o1.object(i).targets.count()
+	fl.printf("%d\t%g\n", i, $o1.object(i).targets.count())
+	cnt = cnt + $o1.object(i).targets.count()
+    }
+    fl.close()
+    print "Total outgoing synapses:\t", cnt
+    
+    // Output: cell number, targets
+    sprint(fn,"%s/div_%s_targets.lst",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    print "Cell List: ",$o1
+    for i=0,$o1.count()-1 {
+	fl.printf("%d", i)
+	if ($4) {
+	    if ($5) {
+		for jj=0,$o1.o(i).targets.count()-1 {
+		    fl.printf("\t%d", grc.index($o1.o(i).targets.o(jj)))		
+		}
+	    }else {
+		for jj=0,$o1.object(i).target_glomi.count()-1 {
+		    fl.printf("\t%d", glom.index($o1.object(i).target_glomi.object(jj)))
+		}
+	    }
+	}else{
+	    for jj=0,$o1.object(i).targets.count()-1 {
+		fl.printf("\t%d", goc.index($o1.object(i).targets.object(jj)))
+	    }	    
+	}
+	fl.printf("\n")	
+    }
+    fl.close()
+}
+
+func store_farthest_glom() { local d, d2, check
+    // Arguments: 1 glom
+    $o1.farthest_glom.remove_all()
+    $o1.farthest_glom.append($o1)
+    d2 = 0
+    for i = 0,$o1.target_grcs.count()-1 {
+	for j = 0,$o1.target_grcs.o(i).nears_glom.count()-1 {
+	    d = p2pdist($o1, $o1.target_grcs.o(i).nears_glom.o(j))
+	    check = 1
+	    for k = 0,$o1.siblings.count()-1 {
+		if (glom.index($o1.siblings.o(k)) == glom.index($o1.target_grcs.o(i).nears_glom.o(j))) check = 0
+	    }
+	    if (check) $o1.siblings.append($o1.target_grcs.o(i).nears_glom.o(j))
+	    if (d > d2) {
+		d2 = d
+		$o1.farthest_glom.remove_all()
+		$o1.farthest_glom.append($o1.target_grcs.o(i).nears_glom.o(j))
+	    }
+	}
+    }
+    return d2
+}
+
+proc Div_glom () { local i, cnt // localobj vvd
+    // Arguments: 1 cell list 2 filename 3 destdir
+    cnt = 0
+    // vvd = new Vector()
+    sprint(fn,"%s/div_%s_%s.lst",$s5,$s2,$s4)
+    fl = new File(fn)
+    fl.wopen()
+    print "Cell List: ",$o1
+    for i=0,$o1.count()-1 {
+	// 	print "Cell: ",$o1.object(i),"\tTargets: ",$o1.object(i).targets.count()
+	//print "Ferthest " ,store_farthest_glom($o1.o(i))*1e6, " um"
+	// print "Siblings ", $o1.o(i).siblings.count()
+	if (strcmp($s4,"grc")==0) {
+	    fl.printf("%d\t%g\n", i, $o1.object(i).target_grcs.count())
+	    cnt = cnt + $o1.object(i).target_grcs.count()
+	}
+	if (strcmp($s4,"goc")==0) {
+	    fl.printf("%d\t%g\n", i, $o1.object(i).target_gocs.count())
+	    cnt = cnt + $o1.object(i).target_gocs.count()
+	}
+    }
+    fl.close()
+    
+    // Output: cell number, targets
+    sprint(fn,"%s/div_%s_target_%s.lst",$s5,$s2,$s4)
+    fl = new File(fn)
+    fl.wopen()
+    print "Cell List: ",$o1
+    for i=0,$o1.count()-1 {
+	// vvd.resize(0)
+	fl.printf("%d", i)
+	if (strcmp($s4,"grc")==0) {
+	    for jj=0,$o1.object(i).target_grcs.count()-1 {
+		fl.printf("\t%d", grc.index($o1.object(i).target_grcs.object(jj)))
+		// vvd.append(p2pdist($o1.o(i),$o1.object(i).target_grcs.object(jj))*1e6)
+	    }
+	}
+	if (strcmp($s4,"goc")==0) {
+	    for jj=0,$o1.object(i).target_gocs.count()-1 {
+		fl.printf("\t%d", goc.index($o1.object(i).target_gocs.object(jj)))
+		// vvd.append(p2pdist($o1.o(i),$o1.object(i).target_grcs.object(jj))*1e6)
+	    }
+	}	// print "Glom ", i, "dendL ", vvd.max()
+	fl.printf("\n")	
+    }
+    fl.close()
+    
+    print "Total outgoing synapses:\t", cnt
+}
+
+proc Conv_grc () { local i localobj vv
+    // Arguments: 1 neuronlist
+    print "Cell List: ",$o1
+    sprint(fn,"%s/conv_%s",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    vv = new Vector()
+    for i=0,$o1.count()-1 {
+	// 	print "Cell: ",$o1.object(i),"\tInh: ",$o1.object(i).inh_sources.count()
+	// 	print "Cell: ",$o1.object(i),"\tExc: ",$o1.object(i).exc_sources.count()
+	fl.printf("%d\t%g\t%g\n",i,$o1.object(i).GABA_L.count(),$o1.object(i).MF_AMPA_SL.count())
+	for j = 0, $o1.o(i).nears_glom.count()-1 {
+	    vv.append(p2pdist($o1.o(i),$o1.o(i).nears_glom.o(j)))
+	}
+    }
+    fl.close()
+    vv.abs()
+    sprint(fn,"%s/conv_dend_%s",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    vv.sub(GrcDiam/2 + GlomDiam/2)
+    vv.printf(fl)
+    fl.close()
+}
+
+proc Conv_glom () { local i
+    // Arguments: 1 neuronlist
+    print "Cell List: ",$o1
+    sprint(fn,"%s/conv_%s",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    for i=0,$o1.count()-1 {
+// 	print "Cell: ",$o1.object(i),"\tInh: ",$o1.object(i).inh_sources.count()
+// 	print "Cell: ",$o1.object(i),"\tExc: ",$o1.object(i).exc_sources.count()
+	fl.printf("%d\t%g\n",i,$o1.object(i).src_goc.count())
+    }
+    fl.close()
+    
+}
+
+proc Conv_goc () { local i
+    // Arguments: 1 neuronlist
+    print "Cell List: ",$o1
+    sprint(fn,"%s/conv_%s.lst",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    for i=0,$o1.count()-1 {
+// 	print "Cell: ",$o1.object(i),"\tInh: ",$o1.object(i).inh_sources.count()
+// 	print "Cell: ",$o1.object(i),"\tExc: ",$o1.object(i).exc_sources.count()
+	fl.printf("%d\t%g\t%g\n",i,$o1.object(i).MF_AMPA_SL.count(),$o1.object(i).PF_AMPA_SL.count())
+    }
+    fl.close()
+    
+    sprint(fn,"%s/conv_%s_glom_sources.lst",$s3,$s2)
+    fl = new File(fn)
+    fl.wopen()
+    for i=0,$o1.count()-1 {
+	// 	print "Cell: ",$o1.object(i),"\tInh: ",$o1.object(i).inh_sources.count()
+	// 	print "Cell: ",$o1.object(i),"\tExc: ",$o1.object(i).exc_sources.count()
+	fl.printf("%d\t",i)
+	for k= 0,$o1.o(i).source_glm.count()-1 {
+	    fl.printf("%g\t",glom.index($o1.o(i).source_glm.o(k)))
+	}
+	fl.printf("\n")
+    }
+    fl.close()
+}

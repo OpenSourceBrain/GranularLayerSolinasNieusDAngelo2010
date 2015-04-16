@@ -1,0 +1,260 @@
+// objref grcmatrix,golmatrix
+// objref vtemp	
+// objref file_gol,file_grc
+objref trace, filename, trace2
+strdef sys_comm
+
+// strdef sfilenumber,dirfilename 
+
+// vtemp=new Vector()
+
+// file_gol=new File()
+// file_grc=new File()
+
+// dirfilename="../data32/"
+
+proc matrix2file() {
+    filename = new File()
+    filename.wopen($s2)
+    $o1.fprint(0,filename,"%-20.10e\t")
+    filename.close()
+//    sprint(sys_comm,"~/bin/flrm.sh %s",$s2)
+//    system(sys_comm)
+}
+
+proc name2file() {
+    filename = new File()
+    filename.aopen($s1)
+    filename.printf("%s\n",$s2)
+    filename.close()
+}
+
+proc tr2file() { 
+    filename = new File()
+    filename.wopen($s1)
+    
+    trace = new Matrix($o2.size(),2)
+    trace.setcol(0,$o2)
+    trace.setcol(1,$o3)
+    
+    trace.fprint(0,filename,"%-20.6e\t")
+    filename.close()
+//    if ($4) { // eanble compression
+//	sprint(sys_comm,"gzip %s",$s1)
+//	system(sys_comm)	
+//    }
+}
+
+func p2pdist3DO_vec() { local response
+    // Arguments: 1 vector orgin, 2 object, 3 radius
+    //     print $o1," ",$o1.coord.x[0]," ",$o1.coord.x[1]
+    //     print $o2," ",$o2.coord.x[0]," ",$o2.coord.x[1]
+    response = sqrt(($o1.x[0]-$o2.coord.x[0])^2 + ($o1.x[1]-$o2.coord.x[1])^2 + ($o1.x[2]-$o2.coord.x[2])^2)
+    return response
+}
+
+proc Save_Vms() {local i, n, d
+    // Arguments: ListName, list, begin, end, directory
+    strdef command,file
+    for i=$3, $4-1 {
+	sprint(file,"%s/%s_%d_vm.dat",$s5,$s1,i)
+	if ($o2.object(i).time.size()>1) {
+	    tr2file(file,$o2.object(i).time,$o2.object(i).RT_Vm,1)
+	}
+    }
+}    
+
+proc Save_currs() {local i, n
+    // Arguments: ListName, list, begin, end, directory
+    strdef command,file
+    for i=$3, $4-1 {
+	d = p2pdist3DO_vec(Origin,$o2.o(i))
+	if ($4==1 || d < saveray.x[0] || (d > saveray.x[1] && d < saveray.x[2])) {
+	    for c = 0,$o2.o(i).channels.count()-1 {
+		sprint(file,"%s/%s_%d_%s_curr.dat",$s5,$s1,i,$o2.o(i).channels.o(c).s)
+		if ($o2.object(i).time.size()>1) {
+		    tr2file(file,$o2.object(i).time,$o2.o(i).currs.o(c),1)
+		}
+	    }
+	}
+    }
+}    
+
+proc Save_acts() {local i, n
+    // Arguments: ListName, list, begin, end, directory
+    strdef command,file
+    for i=$3, $4-1 {
+	d = p2pdist3DO_vec(Origin,$o2.o(i))
+	if ($4==1 || d < saveray.x[0] || (d > saveray.x[1] && d < saveray.x[2])) {
+	    for c = 0,$o2.o(i).channels.count()-1 {
+		sprint(file,"%s/%s_%d_%s_act.dat",$s5,$s1,i,$o2.o(i).channels.o(c).s)
+		if ($o2.object(i).time.size()>1) {
+		    tr2file(file,$o2.object(i).time,$o2.o(i).acts.o(c),1)
+		}
+	    }
+	}
+    }
+}    
+
+proc Save_inacts() {local i, n
+    // Arguments: ListName, list, begin, end, directory
+    strdef command,file
+    for i=$3, $4-1 {
+	d = p2pdist3DO_vec(Origin,$o2.o(i))
+	if ($4==1 || d < saveray.x[0] || (d > saveray.x[1] && d < saveray.x[2])) {
+	    for c = 0,$o2.o(i).channels.count()-1 {
+		sprint(file,"%s/%s_%d_%s_inact.dat",$s5,$s1,i,$o2.o(i).channels.o(c).s)
+		if ($o2.object(i).time.size()>1) {
+		    tr2file(file,$o2.object(i).time,$o2.o(i).inacts.o(c),1)
+		}
+	    }
+	}
+    }
+}    
+
+proc spt2file() { 
+    filename = new File()
+    filename.wopen($s1)
+    $o2.printf(filename)
+    filename.close()
+//     sprint(sys_comm,"~/bin/flrm.sh %s",$s1)
+//     system(sys_comm)
+}
+
+objref lll,idx
+proc Save_SPs() {
+    // Arguments: ListName, begin ,end, filename
+    
+    // Compute the max lenght of spiketrains
+    lll = new Vector()
+    for i=$2, $3-1 { lll.append($o1.object(i).SpikeTrain.size()) }
+    if (lll.max()>0) {
+	trace = new Matrix(lll.max(),$3-$2)
+	
+	for i=$2, $3-1 {
+	    trace.setcol(i-$2,$o1.object(i).SpikeTrain)
+	}
+    }else {
+	trace = new Matrix()
+    }
+    
+    sprint(sys_comm,"%s/%s",$s4,$s5)
+    matrix2file(trace,sys_comm)
+}
+
+proc Save_Vms_3DM() {
+    // Arguments: ListName, begin ,end, filename
+    
+    // Compute the max lenght of spiketrains
+    lll = new Vector()
+    for i=$2, $3-1 { lll.append($o1.object(i).RT_Vm.size()) }
+    if (lll.max()>0) {
+	trace = new Matrix(lll.max(),$3-$2)
+	trace2 = new Matrix(lll.max(),$3-$2)
+	
+	for i=$2, $3-1 {
+	    trace.setcol(i-$2,$o1.object(i).time)
+	    trace2.setcol(i-$2,$o1.object(i).RT_Vm)
+	}
+    }else {
+	trace = new Matrix()
+	trace2 = new Matrix()
+    }
+    
+    sprint(sys_comm,"%s/%s_time.dat",$s5,$s1)
+    matrix2file(trace,sys_comm)
+    sprint(sys_comm,"%s/%s_Vm.dat",$s5,$s1)
+    matrix2file(trace2,sys_comm)
+}
+
+objref sidx
+func Save_SPs_sort() {
+    // Arguments: ListName, begin ,end, filename
+    
+    trace = new Vector()
+    idx = new Vector()
+    
+    lll = new Matrix()
+    
+    for i=$2, $3-1 {
+	trace.append($o1.object(i).SpikeTrain)
+// 	lll.resize($o1.object(i).SpikeTrain.size())
+// 	lll.fill(i-$2+1)
+	idx.append(new Vector($o1.object(i).SpikeTrain.size(),i-$2+1))
+    }
+    
+    sidx = new Vector()
+    sidx = trace.sortindex()
+    if (trace.size()<1) {return 0}
+    
+    lll.resize(trace.size(),2)
+    lll.setcol(0,trace.index(sidx))
+    lll.setcol(1,idx.index(sidx))
+    matrix2file(lll,$s4)
+    return 1
+}
+
+proc SaveRates() {
+    filename = new File()
+    filename.wopen($s1)
+    trace = new Matrix(2,$o2.getcol(1).size())
+    trace.setrow(0,$o2.getcol(1))
+    trace.setrow(1,$o2.getcol(1).div($o2.getcol(1).get(0)/100).sub(100))
+    trace.fprint(0,filename,"%-4.1f\t")
+    filename.close($s1)
+
+//     sprint(sys_comm,"~/bin/flrm.sh %s",$s1)
+//     system(sys_comm)
+}
+
+proc pos2file() { local i
+    filename = new File()
+    filename.wopen($s1)
+    trace = new Vector(3)
+    for i = 0,$o2.count()-1 {
+	trace.copy($o2.object(i).coord)
+	trace.append(i)
+	trace.printf(filename,"%g\t")
+    }
+    filename.close($s1)    
+}
+
+proc Saves() {
+    // Arguments: 1 glom ,2 grc ,3 goc
+    Save_SPs_sort($o3,0,$o3.count(),"Goc_spks.dat")
+    Save_SPs_sort($o2,0,$o2.count(),"Grc_spks.dat")
+    Save_SPs_sort($o1,0,$o1.count(),"Glom_spks.dat")
+    
+    // Save Vm traces
+    // Save_Vms("grc",0,grc.count(),"data")
+    Save_Vms("goc",0,$o3.count(),"data")
+}
+
+// Read from file Golgi_count.txt the simulation index
+// and write the index+1
+func cplus() { local cnt
+    
+    filename = new File()
+    strdef countfile
+    countfile = "Grc_count.txt"
+    filename.ropen(countfile)
+    if (!filename.isopen()) {
+	system("echo 0 > Golgi_count.txt")
+	filename.ropen(countfile)
+    }
+    cnt = filename.scanvar()
+    filename.ropen(countfile)
+    filename.close()
+    filename.wopen(countfile)
+    cnt =cnt+1
+    filename.printf("%f",cnt)
+    filename.close()    
+    print "Simulation number : ",cnt
+    return cnt
+}
+
+strdef lf_s
+proc s_load_file() {
+    sprint(lf_s,"%s/Scripts/%s", $s1,$s2)
+    load_file(lf_s)
+}

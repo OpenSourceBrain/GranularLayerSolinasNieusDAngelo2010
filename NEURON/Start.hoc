@@ -1,0 +1,496 @@
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc") 
+load_proc("nrnmainmenu") 
+nrnmainmenu() 
+nrncontrolmenu()
+
+strdef dirname
+dirname="SimData"
+
+struct_rand = 198456
+
+objref saveray, Origin
+saveray = new Vector(3)
+saveray.x[0] = 10e-6
+saveray.x[1] = 20e-6
+saveray.x[2] = 25e-6
+
+Origin = new Vector(3)
+Origin.x(0) = 0
+Origin.x(1) = 0
+Origin.x(2) = 0
+
+
+// Load saving functions
+xopen("Save_data.hoc")
+
+// Load configuration
+load_file("const.hoc")
+
+// **** Create cells ****
+// Load templates
+if (templ) {
+    load_file("GRANULE_Cell.hoc")  
+    load_file("Golgi_template.hoc")  
+}else{
+    load_file("IF.hoc")
+}
+load_file("Glom_T.hoc")
+
+// Load building functions
+load_file("build_vi.hoc")
+
+// Create cell arrays
+objref grc
+objref goc
+objref glom
+
+grc = new List()
+goc = new List()
+glom = new List()
+
+create empty
+access empty
+
+planarmap(NetGrc,NetStep.getcol(0),"Grc","grc",Origin,1)
+sprint(command,"%s/%s",dirname,"grc_coord.lst")
+pos2file(command,grc)
+
+planarmap(NetGoc,NetStep.getcol(1),"Goc","goc",Origin,1)
+
+planarmap(NetGlom,NetStep.getcol(2),"Glom","glom",Origin,1)
+sprint(command,"%s/%s",dirname,"glom_coord.lst")
+pos2file(command,glom)
+
+bursting(glom,0,0,glom.count(),Stim)
+// randomize(glom,Stim.x[3],Stim.x[3]/2,10)
+
+cvode.active(1)
+cvode.use_local_dt(1)
+//cvode.atol(0.0001)
+
+// goc.object(0).soma.cai
+// ********* Shape plot della rete **********
+// load_file("show.hoc")
+
+load_file("inspect.hoc")
+
+glom2grc_connect(grc,glom,Grcdend,GrcCD.getcol(0))
+
+// Let each glom know the farthes other glom reached by its tragets grcs
+Div_glom(glom,"glom",grc,"grc",dirname)
+
+mesh = 0
+goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0,mesh,grc)
+// goc2grc_connect_comp(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0)
+// block tonic GABA
+// for i = 0,grc.count()-1 {
+//     grc.o(i).soma.gbar_GRANULE_LKG2(0.5) = 0
+// }
+//setgmax_grc(grc,gcorr)
+
+grc2goc_connect(goc,grc,GrcPF,Gocdend,GocCD.getcol(0),GrcCD,0)
+//setgmax_goc(goc,gcorr)
+
+glom2goc_connect(goc,glom,Gocdend,GocCD,GlomCD)
+Div_glom(glom,"glom",grc,"goc",dirname)
+
+sprint(command,"%s/%s",dirname,"goc_coord.lst")
+pos2file(command,goc)
+
+// Randomize synaptic weights
+//randomize_syn(grc,1,0.4,0,5,2,1)
+//randomize_syn(goc,1,0.4,0,5,2,0)
+
+
+// ++++++ Show Netowrk Structure +++++++
+
+Div(goc,"goc",dirname,1,mesh)
+Conv_goc(goc,"goc",dirname)
+Conv_glom(glom,"glom.lst",dirname)
+Conv_grc(grc,"grc.lst",dirname)
+Div(grc,"grc",dirname,0)
+
+// Shape plot della rete
+// load_file("Makemovie.hoc")
+
+
+mossy_stim = 299
+print "Rec grcs"
+savecnt = 0
+for grc_i= 0,grc.count()-1 {
+    grc.object(grc_i).soma cvode.record(&v(0.5),grc.object(grc_i).RT_Vm,grc.object(grc_i).time)
+    
+    if (rec) {
+	// Currents
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_LKG1(0.5),grc.o(grc_i).currs.o(0),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_LKG2(0.5),grc.o(grc_i).currs.o(1),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_Nmda_leak(0.5),grc.o(grc_i).currs.o(2),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_NA(0.5),grc.o(grc_i).currs.o(3),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_NAR(0.5),grc.o(grc_i).currs.o(4),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_PNA(0.5),grc.o(grc_i).currs.o(5),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_KV(0.5),grc.o(grc_i).currs.o(6),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_KA(0.5),grc.o(grc_i).currs.o(7),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_KIR(0.5),grc.o(grc_i).currs.o(8),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_KCA(0.5),grc.o(grc_i).currs.o(9),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_KM(0.5),grc.o(grc_i).currs.o(10),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&ic_GRANULE_CA(0.5),grc.o(grc_i).currs.o(11),grc.o(grc_i).time)
+	
+	// Activations
+	
+
+	grc.o(grc_i).soma cvode.record(&m_GRANULE_NA(0.5),grc.o(grc_i).acts.o(3),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&s_GRANULE_NAR(0.5),grc.o(grc_i).acts.o(4),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&m_GRANULE_PNA(0.5),grc.o(grc_i).acts.o(5),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&n_GRANULE_KV(0.5),grc.o(grc_i).acts.o(6),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&a_GRANULE_KA(0.5),grc.o(grc_i).acts.o(7),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&d_GRANULE_KIR(0.5),grc.o(grc_i).acts.o(8),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&c_GRANULE_KCA(0.5),grc.o(grc_i).acts.o(9),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&n_GRANULE_KM(0.5),grc.o(grc_i).acts.o(10),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&s_GRANULE_CA(0.5),grc.o(grc_i).acts.o(11),grc.o(grc_i).time)
+	
+	// Inactivation
+
+
+	grc.o(grc_i).soma cvode.record(&h_GRANULE_NA(0.5),grc.o(grc_i).inacts.o(3),grc.o(grc_i).time)
+	grc.o(grc_i).soma cvode.record(&f_GRANULE_NAR(0.5),grc.o(grc_i).inacts.o(4),grc.o(grc_i).time)
+
+
+	grc.o(grc_i).soma cvode.record(&b_GRANULE_KA(0.5),grc.o(grc_i).inacts.o(7),grc.o(grc_i).time)
+
+
+
+	grc.o(grc_i).soma cvode.record(&u_GRANULE_CA(0.5),grc.o(grc_i).inacts.o(11),grc.o(grc_i).time)
+	
+    }
+    
+    
+    if (rec) {
+	for ss = 0,grc.object(grc_i).GABA_L.count()-1 {
+	    grc.object(grc_i).synapses.append(new Vector())
+	    grc.object(grc_i).soma cvode.record(&grc.object(grc_i).GABA_L.o(ss).g,grc.object(grc_i).synapses.o(grc.object(grc_i).synapses.count()-1),grc.object(grc_i).time)
+	}
+    }
+}
+print "Saving from ", savecnt, " grcs"
+
+print "Rec Golgis"
+for i= 0,goc.count()-1 {
+goc.object(i).soma cvode.record(&v(0.5),goc.object(i).RT_Vm,goc.object(i).time)}
+
+if (rec) {
+    for goc_i = 0,goc.count()-1 {
+	// Currents
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_lkg(0.5),goc.o(goc_i).currs.o(0),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_Na(0.5),goc.o(goc_i).currs.o(1),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_NaR(0.5),goc.o(goc_i).currs.o(2),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_NaP(0.5),goc.o(goc_i).currs.o(3),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_Ca_HVA(0.5),goc.o(goc_i).currs.o(4),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_Ca_LVA(0.5),goc.o(goc_i).currs.o(5),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_KV(0.5),goc.o(goc_i).currs.o(6),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_KM(0.5),goc.o(goc_i).currs.o(7),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_KA(0.5),goc.o(goc_i).currs.o(8),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_BK(0.5),goc.o(goc_i).currs.o(9),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_SK2(0.5),goc.o(goc_i).currs.o(10),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_hcn1(0.5),goc.o(goc_i).currs.o(11),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&ic_Golgi_hcn2(0.5),goc.o(goc_i).currs.o(12),goc.object(goc_i).time)
+	
+	// Activations
+	goc.o(goc_i).soma cvode.record(&m_Golgi_Na(0.5),goc.o(goc_i).acts.o(1),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&s_Golgi_NaR(0.5),goc.o(goc_i).acts.o(2),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&m_Golgi_NaP(0.5),goc.o(goc_i).acts.o(3),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&s_Golgi_Ca_HVA(0.5),goc.o(goc_i).acts.o(4),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&m_Golgi_Ca_LVA(0.5),goc.o(goc_i).acts.o(5),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&n_Golgi_KV(0.5),goc.o(goc_i).acts.o(6),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&n_Golgi_KM(0.5),goc.o(goc_i).acts.o(7),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&a_Golgi_KA(0.5),goc.o(goc_i).acts.o(8),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&c_Golgi_BK(0.5),goc.o(goc_i).acts.o(9),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&o_Golgi_SK2(0.5),goc.o(goc_i).acts.o(10),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&o_Golgi_hcn1(0.5),goc.o(goc_i).acts.o(11),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&o_Golgi_hcn2(0.5),goc.o(goc_i).acts.o(12),goc.object(goc_i).time)
+	
+	// Inactivations
+	
+	goc.o(goc_i).soma cvode.record(&h_Golgi_Na(0.5),goc.o(goc_i).inacts.o(1),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&f_Golgi_NaR(0.5),goc.o(goc_i).inacts.o(2),goc.object(goc_i).time)
+	
+	goc.o(goc_i).soma cvode.record(&u_Golgi_Ca_HVA(0.5),goc.o(goc_i).inacts.o(4),goc.object(goc_i).time)
+	goc.o(goc_i).soma cvode.record(&h_Golgi_Ca_LVA(0.5),goc.o(goc_i).inacts.o(5),goc.object(goc_i).time)
+
+
+	goc.o(goc_i).soma cvode.record(&b_Golgi_KA(0.5),goc.o(goc_i).inacts.o(8),goc.object(goc_i).time)
+
+	goc.o(goc_i).soma cvode.record(&c_Golgi_SK2(0.5),goc.o(goc_i).inacts.o(10),goc.object(goc_i).time)
+
+
+    }
+}
+
+// Stim.x[0] = 100 // intra burst freq (sp/s)
+// Stim.x[1] = 1000 // inter burst time (ms)
+// Stim.x[2] = 2  // # spikes
+// Stim.x[3] = 1e4 // start bursting (ms)
+// Stim.x[4] = 10 // background firing rate
+// Stim.x[5] = .9 // background firing rate noise
+// bursting(glom,0,0,0,1)
+
+
+// for i = 0,glom.count()-1 {
+//     glom.o(i).Spiking.IntraBurstInterval =    11 // ms
+//     glom.o(i).Spiking.burst_len =             3 // # spikes
+//     glom.o(i).Spiking.IntraBurstNoise =       0 // >=0
+//     glom.o(i).Spiking.InterBurstInterval =    1000 // ms
+//     glom.o(i).Spiking.InterBurstIntervalNoise = 0 // >=0
+//     glom.o(i).Spiking.start_background =      0 // ms
+//     glom.o(i).Spiking.start_burst =           800 // ms
+//     glom.o(i).Spiking.tonic =                 8 // Hz		
+//     glom.o(i).Spiking.BackgroundNoise =       0.9 // >=0
+// }
+
+// Add MLIs
+objref MLI,MLI_SL,MLI_L, MLI_i, MLI_t
+MLI = new List()
+MLI_L = new List()
+MLI_SL = new List()
+MLI_i = new List()
+MLI_t = new List()
+u.uniform(0,173248)
+for igoc = 0,goc.count()-1 {
+    MLI_i.append(new Vector())
+    MLI_t.append(new Vector())
+    MLI.append(new MF_SpikeGenerator_SS(0.5))
+    goc.o(igoc).soma MLI_L.append(new Golgi_PF_AMPA(0.5))
+    MLI_L.o(igoc).e = -65
+    MLI_L.o(igoc).gmax = 1200
+    MLI_L.o(igoc).tau2_Fix = 50
+    MLI_SL.append(new NetCon(MLI.o(igoc), MLI_L.o(igoc), -20, 0, 1))
+}
+while (MLI.count()<23) {
+    print "Extra MLI"
+    MLI.append(new MF_SpikeGenerator_SS(0.5))
+}    
+for igoc = 0,MLI.count()-1 {
+    MLI.o(igoc).IntraBurstInterval =    1 // ms
+    MLI.o(igoc).burst_len =             1 // # spikes
+    MLI.o(igoc).IntraBurstNoise =       0 // >=0
+    MLI.o(igoc).InterBurstInterval =    1e3 // ms
+    MLI.o(igoc).InterBurstIntervalNoise = 0 // >=0
+    MLI.o(igoc).start_background =      1 // ms
+    MLI.o(igoc).start_burst =           1e4 // ms
+    MLI.o(igoc).BackgroundNoise =       0.99 // >=0
+    MLI.o(igoc).tonic =                 100 // Hz
+    MLI.o(igoc).seed(u.repick()) // Hz
+}
+for i= 0,goc.count()-1 {
+    goc.object(i).soma cvode.record(&MLI_L.o(i).i,MLI_i.o(i),MLI_t.o(i))
+}
+
+objref gocmf_i, gocmf_t
+gocmf_i = new List()
+gocmf_t = new List()
+for i= 0,goc.count()-1 {
+    gocmf_i.append(new List())
+    gocmf_t.append(new List())    
+    for s = 0,goc.o(i).MF_AMPA_L.count()-1 {
+	gocmf_i.o(i).append(new Vector())
+	gocmf_t.o(i).append(new Vector())
+	goc.o(i).soma cvode.record(&goc.o(i).MF_AMPA_L.o(s).i,gocmf_i.o(i).o(s),gocmf_t.o(i).o(s))
+    }
+}
+
+// Randomize Goc initial Vm
+u.uniform(-0.3,0.3)
+for i = 0,goc.count()-1 {
+    goc.o(i).Gclamp.amp = u.repick()
+}
+
+
+//bursting_jpg(glom,"faccia_sharp.dat",700,20,10)
+//bursting_jpg(glom,"faccia_blur.dat",700,20,10)
+//bursting_jpg(glom,"faccia_gblur7_2.dat",700,20,10)
+//bursting_jpg(glom,"faccia_gblur3_5.dat",700,20,10)
+
+// cnt = 0
+// for i = 0,glom.count-1 {
+//     if (glom.o(i).Spiking.IntraBurstInterval < 90) {
+// 	print glom.o(i).Spiking.IntraBurstInterval
+// 	print glom.o(i).Spiking.start_burst
+// 	cnt = cnt +1
+//     }
+// }
+// print "Number of active MF = ",cnt
+
+// Set the background activiy
+Stim.x[0] = 1000 // intra burst freq (sp/s)
+Stim.x[1] = 1e5 // inter burst time (ms)
+Stim.x[2] = 10  // # spikes
+Stim.x[3] = 1e9 // start bursting (ms)
+Stim.x[4] = 3.9 // background firing rate
+Stim.x[5] = 0.9 // background firing rate noise
+bursting(glom,0,0,glom.count(),Stim)
+print "Tonic ",glom.o(0).Spiking.tonic
+
+// Burst switch ON
+Stim.x[0] = 300 // intra burst freq (sp/s)
+Stim.x[1] = 1000 // inter burst time (ms)
+Stim.x[2] = 3 // # spikes
+Stim.x[3] = 250 // start bursting (ms)
+Stim.x[4] = 3.9 // background firing rate
+Stim.x[5] = 0.9 // background firing rate noise
+objref Orig
+Orig = new Vector(3)
+Orig.x[0] = 0e-6
+Orig.x[1] = 0e-6
+Orig.x[2] = 0e-6
+radius = 20e-6
+bursting(glom,2,0,0,Stim, Orig, radius,dirname,"Glom_stim_ON.lst",1)
+
+// Burst switch OFF
+// Stim.x[0] = 500 // intra burst freq (sp/s)
+// Stim.x[1] = 1000 // inter burst time (ms)
+// Stim.x[2] = 10 // # spikes
+// Stim.x[3] = 20e5 // start bursting (ms)
+// Stim.x[4] = 10 // background firing rate
+// Stim.x[5] = 0.9 // background firing rate noise
+// objref Orig
+// Orig = new Vector(3)
+// Orig.x[0] = 0e-6
+// Orig.x[1] = 0e-6
+// Orig.x[2] = 0e-6
+// radius = 22e-6
+// bursting(glom,3,0,0,Stim, Orig, radius,dirname,"Glom_stim_OFF.lst",1)
+
+// test
+// Stim.x[0] = 500 // intra burst freq (sp/s)
+// Stim.x[1] = 200 // inter burst time (ms)
+// Stim.x[2] = 5 // # spikes
+// Stim.x[3] = 156 // start bursting (ms)
+// Stim.x[4] = 1 // background firing rate
+// Stim.x[5] = 0.9 // background firing rate noise
+// bursting(glom,0,157,158,Stim, Orig, radius,dirname,"Glom_stim.lst",1)
+
+
+// Stim.X[0] = 500 // Intra Burst Freq (Sp/S)
+// Stim.X[1] = 40 // Inter Burst Time (Ms)
+// Stim.X[2] = 5 // # Spikes
+// Stim.X[3] = 40 // Start Bursting (Ms)
+// Stim.X[4] = 10 // Background Firing Rate
+// Stim.X[5] = 0.9 // Background Firing Rate Noise
+// Objref Orig
+// Orig = New Vector(3)
+// Orig.X[0] = 0e-6
+// Orig.X[1] = 0e-6
+// Orig.X[2] = 0e-6
+// Radius = 200e-6
+// Bursting(Glom,2,0,0,Stim, Orig, Radius,Dirname,"Glom_stim_bg.Lst",.03)
+
+// for j=0, grc.count()-1 { 
+//    for k=0, grc.object(j).MF_AMPA_L.count()-1 { 
+// 	grc.object(j).MF_AMPA_L.object(k).gmax = 0
+// 	grc.object(j).MF_NMDA_L.object(k).gmax = 0
+//     }
+// }
+
+// for j=0, goc.count()-1 { 
+//    for k=0, goc.object(j).MF_AMPA_L.count()-1 { 
+// 	goc.object(j).MF_AMPA_L.object(k).gmax = 0
+// 	goc.object(j).MF_NMDA_L.object(k).gmax = 0
+//     }
+// }
+
+// for j=0, grc.count()-1 { 
+//    for k=0, grc.object(j).GABA_L.count()-1 { 
+// 	grc.object(j).GABA_L.object(k).gmax_factor = 0
+//     }
+// }
+
+celsius = 37
+steps_per_ms = 100
+tstop = Stim.x[3] + 1e3/Stim.x[0] * Stim.x[2] + 150
+print "tstop = ", tstop
+init()
+init()
+//stop_animate = tstop
+print "Running..."
+seeds(glom,50)
+for igoc = 0,MLI.count()-1 {
+    MLI.o(igoc).seed(10) // Hz
+}
+
+//run()
+while (t<tstop) {
+    continuerun(t+50)
+    print "Time ", t
+    for i = 0,goc.count()-1 {
+	print i, goc.o(i).FR()
+    }
+    // Save Spiketrains
+    Save_SPs(goc,0,goc.count(),dirname,"Goc_spks.dat")
+    Save_SPs(grc,0,grc.count(),dirname,"Grc_spks.dat")
+    Save_SPs(glom,0,glom.count(),dirname,"Glom_spks.dat")
+}
+
+// Save Spiketrains
+Save_SPs(goc,0,goc.count(),dirname,"Goc_spks.dat")
+Save_SPs(grc,0,grc.count(),dirname,"Grc_spks.dat")
+Save_SPs(glom,0,glom.count(),dirname,"Glom_spks.dat")
+
+Save_Vms("goc",goc,0,goc.count(),dirname)
+
+if (rec) {
+    Save_currs("goc",goc,0,goc.count(),dirname,0)
+    Save_acts("goc",goc,0,goc.count(),dirname,0)
+    Save_inacts("goc",goc,0,goc.count(),dirname,0)    
+    
+    Save_currs("grc",grc,0,grc.count(),dirname,1)
+    Save_acts("grc",grc,0,grc.count(),dirname,1)
+    Save_inacts("grc",grc,0,grc.count(),dirname,1)    
+    
+}
+
+for i= 0,goc.count()-1 {
+    for s = 0,goc.o(i).MF_AMPA_L.count()-1 {
+	sprint(command,"%s/Goc_mf_syn_%d_%d.dat",dirname,i,s)
+	tr2file(command,gocmf_t.o(i).o(s),gocmf_i.o(i).o(s),1)
+    }
+}
+
+
+Save_Vms("grc",grc,0,grc.count(),dirname)
+// Save_Vms_3DM("grc",grc,0,grc.count(),dirname)
+// Save_Vms_3DM("goc",goc,0,goc.count(),dirname)
+
+
+
+// Save_SPs_sort(goc,0,goc.count(),"Goc_spks.dat")
+// Save_SPs_sort(grc,0,grc.count(),"Grc_spks.dat")
+// Save_SPs_sort(glom,0,glom.count(),"Glom_spks.dat")
+sprint(command,"%s/%s",dirname,"MLIsyn_1.dat")
+tr2file(command,MLI_t.o(0),MLI_i.o(0),1)
+
+// objref syn_vec
+// syn_vec = new Vector()
+// for i= 0,grc.count()-1 {
+//     syn_vec.resize(grc.o(i).synapses.o(0).size())
+//     syn_vec.copy(grc.o(i).synapses.o(0))
+//     for ss = 1,grc.o(i).synapses.count()-1 {
+// 	syn_vec.add(grc.o(i).synapses.o(ss))
+//     }
+//     sprint(command,"%s/Grc_gaba_%d.dat",dirname,i)
+//     tr2file(command,grc.o(i).time,syn_vec)
+// }
+
+
+// for j=0, grc.count()-1 { 
+//    for k=0, grc.object(j).GABA_L.count()-1 { 
+// 	grc.object(j).GABA_L.object(k).gmax = 0
+//     }
+// }
+// //stop_animate = 400
+// init()
+// run(200)
+// //Save Vm traces
+
+// Save_Vms("grc",grc,0,grc.count(),dirname)
+// Save_Vms("goc",goc,0,goc.count(),dirname)
+
+quit()

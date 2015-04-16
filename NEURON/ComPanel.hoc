@@ -1,0 +1,978 @@
+objref AmpaSchemeMenu,mfpanel
+
+xpanel("Comand Panel")
+	xlabel(" ===== Comand Panel ===== ")
+	xbutton("Granule Cell","GrcPanel()")
+	xvalue("Temperature","celsius", 1,"init()", 0, 0 )
+	xmenu("Postsynaptic") 
+		xmenu("Ampa models",1)
+		    GmaxCOD=Granule[0].MF_AMPA_L.o(0).gmax
+		    //GmaxRT=synA_RT[0].gmax
+	        //GmaxWJ=synA_WJ[0].gmax
+		    //GmaxDJ=synA_DJ[0].gmax
+		    xradiobutton("C=O=D","COD()")
+		    //xradiobutton("Raman & Trussell 1995","RamTrus()")
+		    //xradiobutton("Wadiche & Jahr 2001","WadJahr()")
+		    //xradiobutton("Diamond & Jahr 1997","DiamondJahr()")
+		xmenu()
+
+		xmenu("Nmda subtypes")
+		    //xradiobutton("Synaptic","synN_SPanel()")
+		    //xradiobutton("Extra-Synaptic","synN_ESPanel()")
+		    xradiobutton("Synaptic-extrasynaptic","synN_SPanel()")
+		xmenu()	
+		
+	xmenu()
+	xbutton("Presynaptic Parameters","PresynParam()")
+	xmenu("Mossy Fibers")
+		     xradiobutton("Homogeneous mf","HomogeneousMf()")	
+		     xradiobutton("Heterogeneous mf","HeterogeneousMF()")
+		     xradiobutton("Mossy traces","MossyFiberTraces()")
+	xmenu()
+	xmenu("Golgi cells")
+		     xradiobutton("Homogeneous GoC","HomogeneousGoC()")	
+		     xradiobutton("Heterogeneous GoC","HeterogeneousGoC()")
+		     xradiobutton("Golgi traces","GolgiTraces()")
+	xmenu()
+xpanel()
+
+
+// ***************************************************************************************************************************************
+// ************************************************************* Grc parameters **********************************************************
+// ***************************************************************************************************************************************
+
+strdef KinMenu
+KinMenu="kinetics.hoc"
+objref GRCparams,GRCparams_gbar,GRCparams_gbar_Q10
+
+proc GrcPanel(){
+	GRCparams = new HBox()
+	GRCparams.intercept(1)   
+			GRCparams_gbar = new VBox()
+			GRCparams_gbar.intercept(1)   
+			xpanel("2")
+				xlabel("Conductances")
+				xvalue("gNabar","Granule[0].soma.gbar_GRANULE_NA", 1,"", 0, 0 )
+				xvalue("gNapbar","Granule[0].soma.gbar_GRANULE_PNA", 1,"", 0, 0 )
+				xvalue("gNaresurgent","Granule[0].soma.gbar_GRANULE_NAR", 1,"", 0, 0 )
+				xvalue("gKVbar","Granule[0].soma.gbar_GRANULE_KV", 1,"", 0, 0 )
+				xvalue("gKAbar","Granule[0].soma.gbar_GRANULE_KA", 1,"", 0, 0 )
+				xvalue("gKirbar","Granule[0].soma.gbar_GRANULE_KIR", 1,"", 0, 0 )
+				xvalue("gKCabar","Granule[0].soma.gbar_GRANULE_KCA", 1,"", 0, 0 )
+				xvalue("gCaHVAbar","Granule[0].soma.gbar_GRANULE_CA", 1,"", 0, 0 )
+				xvalue("gKSlowbar","Granule[0].soma.gbar_GRANULE_KM", 1,"", 0, 0 )
+				xvalue("gLeakage","Granule[0].soma.gbar_GRANULE_LKG1", 1,"", 0, 0 )
+				xvalue("gGabaA","Granule[0].soma.gbar_GRANULE_LKG2", 1,"", 0, 0 )
+				xvalue("Q10_alp_m","Granule[0].soma.Q10_channel_alp_m_GRANULE_NA", 1,"", 0, 0 )
+				xvalue("Q10_bet_m","Granule[0].soma.Q10_channel_bet_m_GRANULE_NA", 1,"", 0, 0 )
+				xvalue("Q10_alp_h","Granule[0].soma.Q10_channel_alp_h_GRANULE_NA", 1,"", 0, 0 )
+				xvalue("Q10_bet_h","Granule[0].soma.Q10_channel_bet_h_GRANULE_NA", 1,"", 0, 0 )
+				//xbutton("Kinetics...","xopen(KinMenu)")
+			xpanel()
+			xpanel("3")
+				xlabel("Calcium parameters")
+				xvalue("Shell thickness","Granule[0].soma.d_GRANULE_CALC", 1,"", 0, 0 )
+				xvalue("Initial concentration","Granule[0].soma.cai0_GRANULE_CALC", 1,"", 0, 0 )
+				xvalue("Removal rate","Granule[0].soma.beta_GRANULE_CALC", 1,"", 0, 0 ) 
+			xpanel()
+			GRCparams_gbar.intercept(0)
+			GRCparams_gbar.map("Channel conductances")
+			GRCparams_gbar_Q10 = new VBox()
+			GRCparams_gbar_Q10.intercept(1)   
+			xpanel("4")
+				xlabel("Temperature corrected")
+				xvalue("gNabar_Q10","Granule[0].soma.gbar_Q10_GRANULE_NA", 1,"", 0, 0 )
+				xvalue("gNapbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_PNA", 1,"", 0, 0 )
+				xvalue("gNaresurgent_Q10","Granule[0].soma.gbar_Q10_GRANULE_NAR", 1,"", 0, 0 )
+				xvalue("gKVbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_KV", 1,"", 0, 0 )
+				xvalue("gKAbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_KA", 1,"", 0, 0 )
+				xvalue("gKirbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_KIR", 1,"", 0, 0 )
+				xvalue("gKCabar_Q10","Granule[0].soma.gbar_Q10_GRANULE_KCA", 1,"", 0, 0 )
+				xvalue("gCaHVAbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_CA", 1,"", 0, 0 )
+				xvalue("gKSlowbar_Q10","Granule[0].soma.gbar_Q10_GRANULE_KM", 1,"", 0, 0 )
+				xvalue("gLeakage_Q10","Granule[0].soma.gbar_Q10_GRANULE_LKG1", 1,"", 0, 0 )
+				xvalue("gGabaA_Q10","Granule[0].soma.gbar_Q10_GRANULE_LKG2", 1,"", 0, 0 )
+				//xbutton("Kinetics...","xopen(KinMenu)")
+			xpanel()
+			xpanel("5")
+				xlabel("Calcium parameters")
+				xvalue("Shell thickness","Granule[0].soma.d_GRANULE_CALC", 1,"", 0, 0 )
+				xvalue("Initial concentration","Granule[0].soma.cai0_GRANULE_CALC", 1,"", 0, 0 )
+				xvalue("Removal rate","Granule[0].soma.beta_Q10_GRANULE_CALC", 1,"", 0, 0 ) 
+			xpanel()
+			GRCparams_gbar_Q10.intercept(0)
+			GRCparams_gbar_Q10.map("Q10 corrected")
+	GRCparams.intercept(0)
+	GRCparams.map("Granule Cell Parameters")
+}
+
+
+// ***************************************************************************************************************************************
+// **************************************************************** AMPA *****************************************************************
+// ***************************************************************************************************************************************
+
+proc COD(){
+	// Attiva schema COD, disattiva gli altri
+	if (mappa==1) {AmpaSchemeMenu.unmap()}
+
+	// inizializza i valori di pannello
+	Ampa_Alfa_CO=Granule[0].MF_AMPA_L.o(0).r1FIX
+	Ampa_Beta_OC=Granule[0].MF_AMPA_L.o(0).r2
+	Ampa_Alfa_OD=Granule[0].MF_AMPA_L.o(0).r3
+	Ampa_Beta_DO=Granule[0].MF_AMPA_L.o(0).r4
+	Ampa_Alfa_DC=Granule[0].MF_AMPA_L.o(0).r5
+	Ampa_Beta_CD=Granule[0].MF_AMPA_L.o(0).r6FIX
+	Ampa_Cdur=Granule[0].MF_AMPA_L.o(0).Cdur
+	Ampa_Tmax=Granule[0].MF_AMPA_L.o(0).Tmax
+	//Ampa_switcha=Granule[0].MF_AMPA_L.o(0).switcha
+	Ampa_diffuse=Granule[0].MF_AMPA_L.o(0).diffuse
+	Ampa_Diff_Coeff=Granule[0].MF_AMPA_L.o(0).Diff
+	Ampa_Rd=Granule[0].MF_AMPA_L.o(0).Rd 
+	Ampa_M=Granule[0].MF_AMPA_L.o(0).M 
+	Ampa_nd=Granule[0].MF_AMPA_L.o(0).nd
+	//Ampa_sumglut=Granule[0].MF_AMPA_L.o(0).sum_train
+		
+	// ripristina e disattiva le altre conduttanze
+	Ampa_Gmax=GmaxCOD 
+    for i=0,3 {
+		//synA_RT[i].gmax=0
+		//synA_WJ[i].gmax=0
+		//synA_DJ[i].gmax=0
+		Granule[0].MF_AMPA_L.o(i).gmax=Ampa_Gmax
+	}
+
+	AmpaSchemeMenu = new VBox()
+	AmpaSchemeMenu.intercept(1)
+	xpanel("1")
+		xlabel("C=O=D=C scheme")
+		xvalue("Alfa-CO (/ms)","Ampa_Alfa_CO", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Beta-OC (/ms)","Ampa_Beta_OC", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Alfa-OD (/ms)","Ampa_Alfa_OD", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Beta-DO (/ms)","Ampa_Beta_DO", 1,"UpDateAMPACOD()", 0, 0 )	
+		xvalue("Alfa-DC (/ms)","Ampa_Alfa_DC", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Beta-CD (/ms)","Ampa_Beta_CD", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Gmax (pS)","Ampa_Gmax", 1,"UpDateAMPACOD()", 0, 0 )
+
+		xlabel("Diffusion parameters")
+		xstatebutton("Diffuse (1=yes,0=no) ",&Ampa_diffuse,"UpDateAMPACOD()")
+		xvalue("Diffusion Coeff (um2/ms)","Ampa_Diff_Coeff", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Rd (um)","Ampa_Rd", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("M (mol.)","Ampa_M", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("nd ","Ampa_nd", 1,"UpDateAMPACOD()", 0, 0 )
+		//xstatebutton("Sum glutamate (1=yes,0=no) ",&Ampa_sumglut,"UpDateAMPACOD()")
+		
+		xlabel("Pulse parameters")
+		xvalue("Glut pulse (ms)","Ampa_Cdur", 1,"UpDateAMPACOD()", 0, 0 )
+		xvalue("Glut conc  (mM)","Ampa_Tmax", 1,"UpDateAMPACOD()", 0, 0 )
+		//xstatebutton("T(pre)",&Ampa_switcha,"UpDateAMPACOD()")
+	xpanel()			 
+	AmpaSchemeMenu.intercept(0)
+	AmpaSchemeMenu.map()	
+	mappa=1		
+}
+/*
+proc RamTrus(){
+	// Attiva schema Raman&Trussell, disattiva gli altri
+	if (mappa==1) {AmpaSchemeMenu.unmap()}
+
+	// inizializzazione
+	synA_RT_K_f_FIX=synA_RT[0].K_f_FIX
+	synA_RT_K_b=synA_RT[0].K_b
+	synA_RT_K1_f_FIX=synA_RT[0].K1_f_FIX	
+	synA_RT_K1_b=synA_RT[0].K1_b	
+	synA_RT_K2_f_FIX=synA_RT[0].K2_f_FIX	
+	synA_RT_K2_b=synA_RT[0].K2_b
+	synA_RT_K3_f_FIX=synA_RT[0].K3_f_FIX	
+	synA_RT_K3_b=synA_RT[0].K3_b	
+	synA_RT_L_f=synA_RT[0].L_f	
+	synA_RT_L_b=synA_RT[0].L_b	
+	synA_RT_M_b=synA_RT[0].M_b	
+	synA_RT_M_f=synA_RT[0].M_f	
+	synA_RT_I_f=synA_RT[0].I_f	
+	synA_RT_I_b=synA_RT[0].I_b	
+	synA_RT_II_f=synA_RT[0].II_f	
+	synA_RT_II_b=synA_RT[0].II_b	
+	synA_RT_III_f=synA_RT[0].III_f	
+	synA_RT_III_b=synA_RT[0].III_b	
+	synA_RT_Cdur=synA_RT[0].Cdur
+	synA_RT_Tmax=synA_RT[0].Tmax
+	//synA_RT_switcha=synA_RT[0].switcha
+	synA_RT_diffuse=synA_RT[0].diffuse
+	synA_RT_Diff_Coeff=synA_RT[0].Diff 
+	synA_RT_R=synA_RT[0].R 
+	synA_RT_M=synA_RT[0].M 
+	
+	// riattiva e disattiva le altre conduttanze  
+	synA_RT_gmax=GmaxRT
+    	for i=0,3 {
+		Granule[0].synA[i].gmax=0
+		synA_WJ[i].gmax=0
+		synA_DJ[i].gmax=0
+		synA_RT[i].gmax=synA_RT_gmax
+	}
+
+	AmpaSchemeMenu = new VBox()
+	AmpaSchemeMenu.intercept(1)
+	xpanel("1")
+		xlabel("Raman Trussell scheme")
+		xvalue("K_f_FIX","synA_RT_K_f_FIX", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K_b","synA_RT_K_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K1_f_FIX","synA_RT_K1_f_FIX", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K1_b","synA_RT_K1_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K2_f_FIX","synA_RT_K2_f_FIX", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K2_b","synA_RT_K2_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K3_f_FIX","synA_RT_K3_f_FIX", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("K3_b","synA_RT_K3_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("L_f","synA_RT_L_f", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("L_b","synA_RT_L_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("M_b","synA_RT_M_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("M_f","synA_RT_M_f", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("I_f","synA_RT_I_f", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("I_b","synA_RT_I_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("II_f","synA_RT_II_f", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("II_b","synA_RT_II_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("III_f","synA_RT_III_f", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("III_b","synA_RT_III_b", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("Gmax (pS)","synA_RT_gmax", 1,"UpDatesynA_RT()", 0, 0 )
+
+		xlabel("Diffusion parameters")
+		xstatebutton("Diffuse ? ",&synA_RT_diffuse,"UpDatesynA_RT()")
+		xvalue("Diffusion Coeff (um2/ms)","synA_RT_Diff_Coeff", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("R (um)","synA_RT_R", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("M (mol.)","synA_RT_M", 1,"UpDatesynA_RT()", 0, 0 )
+
+		xlabel("Glutpulse params")
+		//xstatebutton("T(pre)",&synA_RT_switcha,"UpDatesynA_RT()")
+		xvalue("Glut pulse (ms)","synA_RT_Cdur", 1,"UpDatesynA_RT()", 0, 0 )
+		xvalue("Glut conc  (mM)","synA_RT_Tmax", 1,"UpDatesynA_RT()", 0, 0 )		
+	xpanel()
+	AmpaSchemeMenu.intercept(0)
+	AmpaSchemeMenu.map()	
+	mappa=1				
+}
+
+proc WadJahr(){
+	// Attiva schema Wadiche&Jahr, disattiva gli altri
+	if (mappa==1) {AmpaSchemeMenu.unmap()}
+
+	// inizializzazione
+	rC0_C1FIX=synA_WJ[0].rC0_C1FIX
+	rC1_C0=synA_WJ[0].rC1_C0
+	rC1_C2FIX=synA_WJ[0].rC1_C2FIX
+	rC2_C1=synA_WJ[0].rC2_C1
+	rC2_O=synA_WJ[0].rC2_O
+	rO_C2=synA_WJ[0].rO_C2
+	rO_C7=synA_WJ[0].rO_C7
+	rC7_O=synA_WJ[0].rC7_O
+	rC3_C4FIX=synA_WJ[0].rC3_C4FIX
+	rC4_C3=synA_WJ[0].rC4_C3
+	rC4_C5=synA_WJ[0].rC4_C5
+	rC5_C4=synA_WJ[0].rC5_C4
+	rC5_C6=synA_WJ[0].rC5_C6
+	rC6_C5=synA_WJ[0].rC6_C5
+	rC1_C3=synA_WJ[0].rC1_C3
+	rC3_C1=synA_WJ[0].rC3_C1
+	rC2_C4=synA_WJ[0].rC2_C4
+	rC4_C2=synA_WJ[0].rC4_C2
+	rO_C5=synA_WJ[0].rO_C5
+	rC5_O=synA_WJ[0].rC5_O
+
+	AmpaWJ_diffuse=synA_WJ[0].diffuse 
+	AmpaWJ_Diff_Coeff=synA_WJ[0].Diff
+	AmpaWJ_R=synA_WJ[0].R 
+	AmpaWJ_M=synA_WJ[0].M 
+
+	//AmpaWJ_switcha=synA_WJ[0].switcha
+	AmpaWJ_Cdur=synA_WJ[0].Cdur
+	AmpaWJ_Tmax=synA_WJ[0].Tmax
+
+	// riattiva e disattiva le altre conduttanze  
+	AmpaWJ_gmax=GmaxWJ // cambia
+    	for i=0,3 {
+		Granule[0].synA[i].gmax=0
+		synA_RT[i].gmax=0
+		synA_DJ[i].gmax=0
+		synA_WJ[i].gmax=AmpaWJ_gmax // cambia
+	}
+	           
+	AmpaSchemeMenu = new VBox()
+	AmpaSchemeMenu.intercept(1)
+	xpanel("1")
+		xlabel("Wadiche &Jahr")		
+		xvalue("rC0_C1FIX (\ms\mM)","rC0_C1FIX", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC1_C0 (\ms)","rC1_C0", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC1_C2FIX (\ms\mM)","rC1_C2FIX", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC2_C1 (\ms)","rC2_C1", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC2_O (\ms)","rC2_O", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rO_C2 (\ms)","rO_C2", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rO_C7 (\ms)","rO_C7", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC7_O (\ms)","rC7_O", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC3_C4FIX (\ms\mM)","rC3_C4FIX", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC4_C3 (\ms)","rC4_C3", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC4_C5 (\ms)","rC4_C5", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC5_C4 (\ms)","rC5_C4", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC5_C6 (\ms)","rC5_C6", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC6_C5 (\ms)","rC6_C5", 1,"UpDateAMPAWJ()", 0, 0 ) 
+		xvalue("rC1_C3 (\ms)","rC1_C3", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC3_C1 (\ms)","rC3_C1", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC2_C4 (\ms)","rC2_C4", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC4_C2 (\ms)","rC4_C2", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rO_C5 (\ms)","rO_C5", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("rC5_O (\ms)","rC5_O", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("Gmax (pS)","AmpaWJ_gmax", 1,"UpDateAMPAWJ()", 0, 0 )
+
+		xlabel("Diffusion parameters")
+		xstatebutton("Diffuse ? ",&AmpaWJ_diffuse,"UpDateAMPAWJ()")
+		xvalue("Diffusion Coeff (um2/ms)","AmpaWJ_Diff_Coeff", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("R (um)","AmpaWJ_R", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("M (mol.)","AmpaWJ_M", 1,"UpDateAMPAWJ()", 0, 0 )
+
+		xlabel("Glutpulse params")
+		//xstatebutton("T(pre)",&AmpaWJ_switcha,"UpDateAMPAWJ()")
+		xvalue("Glut pulse (ms)","AmpaWJ_Cdur", 1,"UpDateAMPAWJ()", 0, 0 )
+		xvalue("Glut conc  (mM)","AmpaWJ_Tmax", 1,"UpDateAMPAWJ()", 0, 0 )	
+	xpanel()
+	AmpaSchemeMenu.intercept(0)
+	AmpaSchemeMenu.map()	
+	mappa=1				
+}
+
+proc DiamondJahr(){
+	// Attiva schema Diamond&Jahr, disattiva gli altri
+	if (mappa==1) {AmpaSchemeMenu.unmap()}
+
+	// inizializzazione
+
+	kp1=synA_DJ[0].kp1
+	km1=synA_DJ[0].km1 
+	kp2=synA_DJ[0].kp2 
+	km2=synA_DJ[0].km2 
+	kp3=synA_DJ[0].kp3
+	km3=synA_DJ[0].km3
+	kpa=synA_DJ[0].kpa 
+	kma=synA_DJ[0].kma 
+	alf=synA_DJ[0].alf
+	bet=synA_DJ[0].bet 
+
+	AmpaDJ_diffuse=synA_DJ[0].diffuse 
+	AmpaDJ_Diff_Coeff=synA_DJ[0].Diff
+	AmpaDJ_R=synA_DJ[0].R 
+	AmpaDJ_M=synA_DJ[0].M 
+
+	//AmpaDJ_switcha=synA_DJ[0].switcha
+	AmpaDJ_Cdur=synA_DJ[0].Cdur
+	AmpaDJ_Tmax=synA_DJ[0].Tmax
+
+	// riattiva e disattiva le altre conduttanze  
+	AmpaDJ_gmax=GmaxDJ // cambia
+    	for i=0,3 {
+		Granule[0].synA[i].gmax=0
+		synA_RT[i].gmax=0
+		synA_WJ[i].gmax=0
+		synA_DJ[i].gmax=AmpaDJ_gmax // cambia
+	}
+	           
+	AmpaSchemeMenu = new VBox()
+	AmpaSchemeMenu.intercept(1)
+	xpanel("1")
+		xlabel("Diamond &Jahr")		
+		xvalue("kpa (\ms\mM)","kpa", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("kma (\ms)","kma", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("alf (\ms\mM)","alf", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("bet (\ms)","bet", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("kp1 (\ms)","kp1", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("km1 (\ms)","km1", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("kp2 (\ms)","kp2", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("km2 (\ms)","km2", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("kp3  (\ms)","kp3", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("km3  (\ms)","km3", 1,"UpDateAMPADJ()", 0, 0 )
+	
+		xvalue("Gmax (pS)","AmpaDJ_gmax", 1,"UpDateAMPADJ()", 0, 0 )
+
+		xlabel("Diffusion parameters")
+		xstatebutton("Diffuse ? ",&AmpaDJ_diffuse,"UpDateAMPADJ()")
+		xvalue("Diffusion Coeff (um2/ms)","AmpaDJ_Diff_Coeff", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("R (um)","AmpaDJ_R", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("M (mol.)","AmpaDJ_M", 1,"UpDateAMPADJ()", 0, 0 )
+
+		xlabel("Glutpulse params")
+		//xstatebutton("T(pre)",&AmpaDJ_switcha,"UpDateAMPADJ()")
+		xvalue("Glut pulse (ms)","AmpaDJ_Cdur", 1,"UpDateAMPADJ()", 0, 0 )
+		xvalue("Glut conc  (mM)","AmpaDJ_Tmax", 1,"UpDateAMPADJ()", 0, 0 )	
+	xpanel()
+	AmpaSchemeMenu.intercept(0)
+	AmpaSchemeMenu.map()	
+	mappa=1				
+}
+
+proc UpDateAMPADJ(){
+	for (i=0;i<=3;i=i+1) {
+		synA_DJ[i].kpa=kpa
+		synA_DJ[i].kma=kma
+		synA_DJ[i].alf=alf
+		synA_DJ[i].bet=bet
+		synA_DJ[i].kp1=kp1
+		synA_DJ[i].km1=km1
+		synA_DJ[i].kp2=kp2
+		synA_DJ[i].km2=km2
+
+		synA_DJ[i].gmax=AmpaDJ_gmax
+		synA_DJ[i].Cdur=AmpaDJ_Cdur
+		synA_DJ[i].Tmax=AmpaDJ_Tmax
+		//synA_DJ[i].switcha=AmpaDJ_switcha
+		synA_DJ[i].diffuse=AmpaDJ_diffuse
+		synA_DJ[i].Diff=AmpaDJ_Diff_Coeff
+		synA_DJ[i].R=AmpaDJ_R
+		synA_DJ[i].M=AmpaDJ_M
+	}
+}
+*/
+
+
+proc UpDateAMPACOD(){
+	for (i=0;i<=3;i=i+1) {
+		Granule[0].MF_AMPA_L.o(i).r1FIX=Ampa_Alfa_CO
+		Granule[0].MF_AMPA_L.o(i).r2=Ampa_Beta_OC
+		Granule[0].MF_AMPA_L.o(i).r3=Ampa_Alfa_OD
+		Granule[0].MF_AMPA_L.o(i).r4=Ampa_Beta_DO
+		Granule[0].MF_AMPA_L.o(i).r5=Ampa_Alfa_DC
+		Granule[0].MF_AMPA_L.o(i).r6FIX=Ampa_Beta_CD
+		Granule[0].MF_AMPA_L.o(i).gmax=Ampa_Gmax
+		Granule[0].MF_AMPA_L.o(i).Cdur=Ampa_Cdur
+		Granule[0].MF_AMPA_L.o(i).Tmax=Ampa_Tmax
+		//Granule[0].MF_AMPA_L.o(i).switcha=Ampa_switcha	
+		Granule[0].MF_AMPA_L.o(i).diffuse=Ampa_diffuse
+		Granule[0].MF_AMPA_L.o(i).Diff=Ampa_Diff_Coeff
+		Granule[0].MF_AMPA_L.o(i).Rd=Ampa_Rd
+		Granule[0].MF_AMPA_L.o(i).M=Ampa_M
+		Granule[0].MF_AMPA_L.o(i).nd=Ampa_nd
+		print Ampa_sumglut
+		//Granule[0].MF_AMPA_L.o(i).sum_train=Ampa_sumglut
+	}
+}
+
+/*
+proc UpDatesynA_RT(){
+	for (i=0;i<=3;i=i+1) {
+		synA_RT[i].K_f_FIX=synA_RT_K_f_FIX
+		synA_RT[i].K_b=synA_RT_K_b
+		synA_RT[i].K1_f_FIX=synA_RT_K1_f_FIX
+		synA_RT[i].K1_b=synA_RT_K1_b
+		synA_RT[i].K2_f_FIX=synA_RT_K2_f_FIX
+		synA_RT[i].K2_b=synA_RT_K2_b
+		synA_RT[i].K3_f_FIX=synA_RT_K3_f_FIX
+		synA_RT[i].K3_b=synA_RT_K3_b
+		synA_RT[i].L_f=synA_RT_L_f
+		synA_RT[i].L_b=synA_RT_L_b
+		synA_RT[i].M_b=synA_RT_M_b
+		synA_RT[i].M_f=synA_RT_M_f
+		synA_RT[i].I_f=synA_RT_I_f
+		synA_RT[i].I_b=synA_RT_I_b
+		synA_RT[i].II_f=synA_RT_II_f
+		synA_RT[i].II_b=synA_RT_II_b
+		synA_RT[i].III_f=synA_RT_III_f
+		synA_RT[i].III_b=synA_RT_III_b
+
+		synA_RT[i].Cdur=synA_RT_Cdur
+		synA_RT[i].Tmax=synA_RT_Tmax
+		synA_RT[i].gmax=synA_RT_gmax
+		//synA_RT[i].switcha=synA_RT_switcha
+		synA_RT[i].diffuse=synA_RT_diffuse
+		synA_RT[i].Diff=synA_RT_Diff_Coeff
+		synA_RT[i].R=synA_RT_R
+		synA_RT[i].M=synA_RT_M
+	}
+}
+
+proc UpDateAMPAWJ(){
+	for (i=0;i<=3;i=i+1) {
+		synA_WJ[i].rC0_C1FIX=rC0_C1FIX
+		synA_WJ[i].rC1_C0=rC1_C0
+		synA_WJ[i].rC1_C2FIX=rC1_C2FIX
+		synA_WJ[i].rC2_C1=rC2_C1
+		synA_WJ[i].rC2_O=rC2_O
+		synA_WJ[i].rO_C2=rO_C2
+		synA_WJ[i].rO_C7			=	rO_C7
+		synA_WJ[i].rC7_O			=	rC7_O
+		synA_WJ[i].rC3_C4FIX			=	rC3_C4FIX
+		synA_WJ[i].rC4_C3			=	rC4_C3
+		synA_WJ[i].rC4_C5			=	rC4_C5
+		synA_WJ[i].rC5_C4			=	rC5_C4
+		synA_WJ[i].rC5_C6			=	rC5_C6
+		synA_WJ[i].rC6_C5			=	rC6_C5
+		synA_WJ[i].rC1_C3			=	rC1_C3
+		synA_WJ[i].rC3_C1			=	rC3_C1
+		synA_WJ[i].rC2_C4			=	rC2_C4
+		synA_WJ[i].rC4_C2			=	rC4_C2
+		synA_WJ[i].rO_C5			=	rO_C5
+		synA_WJ[i].rC5_O			=	rC5_O
+
+		synA_WJ[i].diffuse 		=	AmpaWJ_diffuse
+		synA_WJ[i].Diff		=	AmpaWJ_Diff_Coeff
+		synA_WJ[i].R 		=	AmpaWJ_R
+		synA_WJ[i].M 		=	AmpaWJ_M			 
+		//synA_WJ[i].switcha		=	AmpaWJ_switcha
+		synA_WJ[i].Cdur		=	AmpaWJ_Cdur
+		synA_WJ[i].Tmax		=	AmpaWJ_Tmax
+
+
+
+	}
+}
+*/
+
+
+// ***************************************************************************************************************************************
+// **************************************************************** NMDA *****************************************************************
+// ***************************************************************************************************************************************
+
+/*
+proc synN_SPanel(){
+	Nmda_Rb=Granule[0].synNS[0].Rb
+	Nmda_Ru=Granule[0].synNS[0].Ru
+	Nmda_Ro=Granule[0].synNS[0].Ro
+	Nmda_Rc=Granule[0].synNS[0].Rc
+	Nmda_Rd=Granule[0].synNS[0].Rd
+	Nmda_Rr=Granule[0].synNS[0].Rr
+	Nmda_Gmax2=Granule[0].synNS[0].gmax
+	Nmda_Cdur2=Granule[0].synNS[0].Cdur
+	Nmda_Tmax_S=Granule[0].synNS[0].Tmax
+	Nmda_v02=Granule[0].synNS[0].v0_block
+	Nmda_k2=Granule[0].synNS[0].k_block
+	xpanel("NMDA SYNAPTIC PARAMETERS")
+		xlabel("NMDA synaptic")
+		xvalue("Rb (ms^-1 uM^1)","Nmda_Rb",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Ru (ms^-1)","Nmda_Ru",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Rr (ms^-1)","Nmda_Rr",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Rd (ms^-1)","Nmda_Rd",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Ro (ms^-1)","Nmda_Ro",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Rc (ms^-1)","Nmda_Rc",1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Glut pulse (ms)","Nmda_Cdur2", 1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Glutamate concentration pulse (mM)","Nmda_Tmax_S", 1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Gmax (pS)","Nmda_Gmax2", 1,"UpDatesynN_S()", 0, 0 )
+		xvalue("V½ Block (mV)","Nmda_v02", 1,"UpDatesynN_S()", 0, 0 )
+		xvalue("Vk Block (mV)","Nmda_k2", 1,"UpDatesynN_S()", 0, 0 )
+	xpanel()
+}
+*/
+
+
+
+proc synN_SPanel(){
+	Nmda_Rb_ES=Granule[0].MF_NMDA_L.o(0).Rb
+	Nmda_Ru_ES=Granule[0].MF_NMDA_L.o(0).Ru
+	Nmda_Ro_ES=Granule[0].MF_NMDA_L.o(0).Ro
+	Nmda_Rc_ES=Granule[0].MF_NMDA_L.o(0).Rc
+	Nmda_Rd_ES=Granule[0].MF_NMDA_L.o(0).Rd
+	Nmda_Rr_ES=Granule[0].MF_NMDA_L.o(0).Rr
+	Nmda_Gmax2_ES=Granule[0].MF_NMDA_L.o(0).gmax
+	Nmda_Cdur2_ES=Granule[0].MF_NMDA_L.o(0).Cdur
+	Nmda_Tmax_ES=Granule[0].MF_NMDA_L.o(0).Tmax
+	Nmda_v02_ES=Granule[0].MF_NMDA_L.o(0).v0_block
+	Nmda_k2_ES=Granule[0].MF_NMDA_L.o(0).k_block
+	Nmda_diffuse_ES=Granule[0].MF_NMDA_L.o(0).diffuse
+	NmdaDCES=Granule[0].MF_NMDA_L.o(0).Diff
+	NmdaRES=Granule[0].MF_NMDA_L.o(0).Rd
+	NmdaMES=Granule[0].MF_NMDA_L.o(0).M
+	Nmdalamd=Granule[0].MF_NMDA_L.o(0).lamd
+
+	Nmda_nd=Granule[0].MF_NMDA_L.o(0).nd
+	//Nmda_sumglut=Granule[0].MF_NMDA_L.o(0).sum_train
+	//Nmda_pre_act=Granule[0].MF_NMDA_L.o(0).pre_act
+	
+	
+	xpanel("NMDA SYNAPTIC & EXTRA PARAMETERS")
+		xlabel("NMDA extra-synaptic")
+		xvalue("Rb (ms^-1 uM^1)","Nmda_Rb_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Ru (ms^-1)","Nmda_Ru_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Rr (ms^-1)","Nmda_Rr_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Rd (ms^-1)","Nmda_Rd_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Ro (ms^-1)","Nmda_Ro_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Rc (ms^-1)","Nmda_Rc_ES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Gmax (pS)","Nmda_Gmax2_ES", 1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("V½ Block (mV)","Nmda_v02_ES", 1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Vk Block (mV)","Nmda_k2_ES", 1,"UpDatesynN_ES()", 0, 0 )
+
+		xlabel("Diffusion parameters")		
+		xlabel("====================")
+		//xstatebutton("Activate through diffusion (=1) or a pulse (=0)",&Nmda_diffuse_ES,"UpDatesynN_ES()")
+		//xlabel("Diffusion")
+		
+		xvalue("Diffusion Coefficient (um2/ms)","NmdaDCES",1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Axial distance (nm)","Nmdalamd", 1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Rd (um)","NmdaRES", 1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("M (mol.)","NmdaMES", 1,"UpDatesynN_ES()", 0, 0 )
+		//xstatebutton("Modulate glutamate activity ?",&Nmda_pre_act,"UpDatesynN_ES()")
+		
+		
+		xlabel("**** NMDA pulse has been disabled ****")	
+		/*
+		xvalue("nd ","Nmda_nd", 1,"UpDatesynN_ES()", 0, 0 )
+		xstatebutton("Sum glutamate (1=yes,0=no) ",&Nmda_sumglut,"UpDatesynN_ES()")
+
+		
+		xlabel("Pulse")	
+		xlabel("=====")	
+		xvalue("Time of glutamate pulse (ms)","Nmda_Cdur2_ES", 1,"UpDatesynN_ES()", 0, 0 )
+		xvalue("Glutamate concentration pulse (mM)","Nmda_Tmax_ES", 1,"UpDatesynN_ES()", 0, 0 )				
+		*/
+		
+	xpanel()
+}
+
+/*
+proc UpDatesynN_S(){
+	for (i=0;i<=3;i=i+1) {
+		// Synaptic
+		Granule[0].synNS[i].Rb=Nmda_Rb
+		Granule[0].synNS[i].Ru=Nmda_Ru
+		Granule[0].synNS[i].Rr=Nmda_Rr
+		Granule[0].synNS[i].Rd=Nmda_Rd
+		Granule[0].synNS[i].Ro=Nmda_Ro
+		Granule[0].synNS[i].Rc=Nmda_Rc
+		Granule[0].synNS[i].gmax=Nmda_Gmax2
+		Granule[0].synNS[i].Cdur=Nmda_Cdur2
+		Granule[0].synNS[i].Tmax=Nmda_Tmax_S
+		Granule[0].synNS[i].v0_block=Nmda_v02
+		Granule[0].synNS[i].k_block=Nmda_k2
+	}
+}
+*/
+
+proc UpDatesynN_ES(){
+	for (i=0;i<=3;i=i+1) {
+		// Extra-Synaptic
+		Granule[0].MF_NMDA_L.o(i).Rb=Nmda_Rb_ES
+		Granule[0].MF_NMDA_L.o(i).Ru=Nmda_Ru_ES
+		Granule[0].MF_NMDA_L.o(i).Rr=Nmda_Rr_ES
+		Granule[0].MF_NMDA_L.o(i).Rd=Nmda_Rd_ES
+		Granule[0].MF_NMDA_L.o(i).Ro=Nmda_Ro_ES
+		Granule[0].MF_NMDA_L.o(i).Rc=Nmda_Rc_ES
+		Granule[0].MF_NMDA_L.o(i).gmax=Nmda_Gmax2_ES
+		Granule[0].MF_NMDA_L.o(i).Cdur=Nmda_Cdur2_ES
+		Granule[0].MF_NMDA_L.o(i).Tmax=Nmda_Tmax_ES
+		Granule[0].MF_NMDA_L.o(i).v0_block=Nmda_v02_ES
+		Granule[0].MF_NMDA_L.o(i).k_block=Nmda_k2_ES
+		Granule[0].MF_NMDA_L.o(i).diffuse=Nmda_diffuse_ES
+		Granule[0].MF_NMDA_L.o(i).Diff=NmdaDCES
+		Granule[0].MF_NMDA_L.o(i).Rd=NmdaRES
+		Granule[0].MF_NMDA_L.o(i).lamd=Nmdalamd
+		Granule[0].MF_NMDA_L.o(i).M=NmdaMES
+		
+		Granule[0].MF_NMDA_L.o(i).nd=Nmda_nd
+		//Granule[0].MF_NMDA_L.o(i).sum_train=Nmda_sumglut
+		//Granule[0].MF_NMDA_L.o(i).pre_act=Nmda_pre_act
+		//Granule[0].MF_AMPA_L.o(i).pre_act=Nmda_pre_act
+	}
+}
+
+// ***************************************************************************************************************************************
+// **************************************************************** Presinaptico *********************************************************
+// ***************************************************************************************************************************************
+
+proc PresynParam(){
+	Tau_rec=Granule[0].MF_AMPA_L.o(0).tau_rec
+	Tau_facil=Granule[0].MF_AMPA_L.o(0).tau_facil
+	Tau_1=Granule[0].MF_AMPA_L.o(0).tau_1
+	U=Granule[0].MF_AMPA_L.o(0).U
+//	Us=Granule[0].MF_AMPA_L.o(0).Us
+	xpanel("PRESYNAPTIC PARAMETERS")   
+		xlabel("Presynaptic parameters")
+		xvalue("T_transition (ms)","Tau_1", 1,"UpDatePre()", 0, 0 )
+		xvalue("T_recovery (ms)","Tau_rec", 1,"UpDatePre()", 0, 0 )
+		xvalue("T_facilita (ms)","Tau_facil", 1,"UpDatePre()", 0, 0 )
+		xvalue("P release","U", 1,"UpDatePre()", 0, 0 )
+//		xvalue("Use synaptic","Us", 1,"UpDatePre()", 0, 0 )
+	xpanel()
+}
+
+proc UpDatePre(){
+	for (i=0;i<=3;i=i+1) {
+		Granule[0].MF_AMPA_L.o(i).tau_rec=Tau_rec
+		Granule[0].MF_AMPA_L.o(i).tau_facil=Tau_facil
+		Granule[0].MF_AMPA_L.o(i).tau_1=Tau_1
+		Granule[0].MF_AMPA_L.o(i).U=U
+		// Granule[0].MF_AMPA_L.o(i).Us=Us
+		
+
+// 		synA_RT[i].tau_rec=Tau_rec
+// 		synA_RT[i].tau_facil=Tau_facil
+// 		synA_RT[i].tau_1=Tau_1
+// 		synA_RT[i].U=U
+
+// 		synA_WJ[i].tau_rec=Tau_rec
+// 		synA_WJ[i].tau_facil=Tau_facil
+// 		synA_WJ[i].tau_1=Tau_1
+// 		synA_WJ[i].U=U
+// 		
+// 		synA_DJ[i].tau_rec=Tau_rec
+// 		synA_DJ[i].tau_facil=Tau_facil
+// 		synA_DJ[i].tau_1=Tau_1
+// 		synA_DJ[i].U=U
+
+		Granule[0].MF_NMDA_L.o(i).tau_rec=Tau_rec
+		Granule[0].MF_NMDA_L.o(i).tau_facil=Tau_facil
+		Granule[0].MF_NMDA_L.o(i).tau_1=Tau_1
+		Granule[0].MF_NMDA_L.o(i).U=U
+
+// 		Granule[0].MF_NMDA_L.o(i).tau_rec=Tau_rec
+// 		Granule[0].MF_NMDA_L.o(i).tau_facil=Tau_facil
+// 		Granule[0].MF_NMDA_L.o(i).tau_1=Tau_1
+// 		Granule[0].MF_NMDA_L.o(i).U=U
+	}
+}
+
+// ***************************************************************************************************************************************
+// **************************************************************** Mossy Fiber  *********************************************************
+// ***************************************************************************************************************************************
+
+objref grafici[4]
+ngraph = 0
+
+proc addgraph() { local ii	
+	ngraph = ngraph+1
+	ii = ngraph-1
+	grafici[ii] = new Graph(0)
+	grafici[ii].size(0,tstop,$2,$3)
+	grafici[ii].view(0,0,150,48,0,48,150,48)
+	grafici[ii].xaxis()
+	grafici[ii].yaxis()
+	grafici[ii].addvar($s1,1,0)
+	grafici[ii].save_name("graphList[0].")
+	//grafici[ii].view(2)
+	// E la documentazione dove era????
+	graphList[0].append(grafici[ii])
+	grafici[ii].exec_menu("View = plot")
+	grafici[ii].flush()
+}
+
+
+proc MossyFiberTraces(){
+	mfpanel = new VBox()
+	mfpanel.intercept(1)
+	xpanel("Mossy fibers traces")   
+		addgraph("Mossy[0].y",0,2)
+		addgraph("Mossy[1].y",0,2)
+		addgraph("Mossy[2].y",0,2)
+		addgraph("Mossy[3].y",0,2)
+	xpanel()
+	mfpanel.intercept(0)
+	mfpanel.map("Mossy Fiber traces")
+}
+
+proc HomogeneousMf(){
+	xpanel("MOSSY PARAMETERS")   
+	xlabel("Homogeneous mossy fibers")
+	InSpike=Mossy[0].IntraBurstInterval
+	InBurst=Mossy[0].InterBurstInterval
+	NumSpikes=Mossy[0].burst_len
+	StartIn=Mossy[0].start_burst
+	StartBg=Mossy[0].start_background
+	EndIn=Mossy[0].end
+	Rumore=Mossy[0].IntraBurstNoise
+	Rumore_Bg=Mossy[0].BackgroundNoise
+	Bg_rate = Mossy[0].tonic
+	NumSin=4
+	delay=Mossy[0].delay
+	UpDateMossyO()
+	xvalue("Number of synapses ","NumSin", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Interspike interval (ms)","InSpike", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Interburst interval (ms)","InBurst", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Spikes per burst        ","NumSpikes", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","StartIn", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Begin of the Background (ms)","StartBg", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Background rate (Hz)","Bg_rate", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("End of the Input (ms)","EndIn", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Burst Poisson Noise (0=no noise,1=noise)","Rumore", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Background Poisson Noise (0=no noise,1=noise)","Rumore_Bg", 1,"UpDateMossyO()", 0, 0 )
+	xvalue("Shift Poisson distribution (ms) ","delay",1,"UpDateMossyO()", 0, 0 )
+	xpanel()
+    }
+    
+    proc UpDateMossyO(){
+	print "UpDating Mossy parameters"
+	for(i=0;i<=3;i=i+1) {	
+		Mossy[i].IntraBurstInterval=InSpike
+		Mossy[i].InterBurstInterval=InBurst
+		Mossy[i].burst_len=NumSpikes
+		Mossy[i].start_burst=StartIn
+		Mossy[i].start_background=StartBg
+		Mossy[i].IntraBurstNoise=Rumore
+		Mossy[i].BackgroundNoise=Rumore_Bg
+		Mossy[i].tonic=Bg_rate
+		Mossy[i].delay=delay
+		if (i<=NumSin-1) {
+			Mossy[i].end=EndIn
+		} else {
+			Mossy[i].end=0
+		}
+	}
+}
+
+proc HeterogeneousMF(){
+	xpanel("Mossy heterogeneus")   
+	xlabel("Heterogeneous mossy fibers")
+
+	xvalue("Interspike interval (ms)","Mossy[0].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Mossy[0].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Mossy[0].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Mossy[0].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Mossy[0].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Mossy[0].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Mossy[0].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Mossy[0].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Mossy[0].BackgroundNoise", 1,"", 0, 0 )
+
+	xlabel("Mossy 2")
+	xvalue("Interspike interval (ms)","Mossy[1].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Mossy[1].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Mossy[1].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Mossy[1].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Mossy[1].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Mossy[1].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Mossy[1].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Mossy[1].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Mossy[1].BackgroundNoise", 1,"", 0, 0 )
+
+
+	xlabel("Mossy 3")
+	xvalue("Interspike interval (ms)","Mossy[2].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Mossy[2].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Mossy[2].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Mossy[2].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Mossy[2].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Mossy[2].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Mossy[2].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Mossy[2].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Mossy[2].BackgroundNoise", 1,"", 0, 0 )
+
+	xlabel("Mossy 4")
+	xvalue("Interspike interval (ms)","Mossy[3].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Mossy[3].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Mossy[3].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Mossy[3].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Mossy[3].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Mossy[3].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Mossy[3].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Mossy[3].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Mossy[3].BackgroundNoise", 1,"", 0, 0 )
+
+	xpanel()
+    }
+    
+    
+    //***** Golgi spikgenerators *********
+    
+proc GolgiFiberTraces(){
+	mfpanel = new VBox()
+	mfpanel.intercept(1)
+	xpanel("Golgi fibers traces")   
+		addgraph("Goc[0].y",0,2)
+		addgraph("Goc[1].y",0,2)
+		addgraph("Goc[2].y",0,2)
+		addgraph("Goc[3].y",0,2)
+	xpanel()
+	mfpanel.intercept(0)
+	mfpanel.map("Golgi Fiber traces")
+}
+
+proc HomogeneousGoC(){
+	xpanel("Golgi PARAMETERS")   
+	xlabel("Homogeneous mossy fibers")
+	GoC_InSpike=Goc[0].IntraBurstInterval
+	GoC_InBurst=Goc[0].InterBurstInterval
+	GoC_NumSpikes=Goc[0].burst_len
+	GoC_StartIn=Goc[0].start_burst
+	GoC_StartBg=Goc[0].start_background
+	GoC_EndIn=Goc[0].end
+	GoC_Rumore=Goc[0].IntraBurstNoise
+	GoC_Rumore_Bg=Goc[0].BackgroundNoise
+	GoC_Bg_rate = Goc[0].tonic
+	GoC_NumSin=4
+	GoC_delay=Goc[0].delay
+	UpDateGolgiO()
+	xvalue("Number of synapses ","GoC_NumSin", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Interspike interval (ms)","GoC_InSpike", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Interburst interval (ms)","GoC_InBurst", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Spikes per burst        ","GoC_NumSpikes", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","GoC_StartIn", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Begin of the Background (ms)","GoC_StartBg", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Background rate (Hz)","GoC_Bg_rate", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("End of the Input (ms)","GoC_EndIn", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Burst Poisson Noise (0=no noise,1=noise)","GoC_Rumore", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Background Poisson Noise (0=no noise,1=noise)","GoC_Rumore_Bg", 1,"UpDateGolgiO()", 0, 0 )
+	xvalue("Shift Poisson distribution (ms) ","GoC_delay",1,"UpDateGolgiO()", 0, 0 )
+	xpanel()
+    }
+    
+    proc UpDateGolgiO(){
+	print "UpDating Golgi parameters"
+	for(i=0;i<=3;i=i+1) {	
+		Goc[i].IntraBurstInterval=GoC_InSpike
+		Goc[i].InterBurstInterval=GoC_InBurst
+		Goc[i].burst_len=GoC_NumSpikes
+		Goc[i].start_burst=GoC_StartIn
+		Goc[i].start_background=GoC_StartBg
+		Goc[i].IntraBurstNoise=GoC_Rumore
+		Goc[i].BackgroundNoise=GoC_Rumore_Bg
+		Goc[i].tonic=GoC_Bg_rate
+		Goc[i].delay=GoC_delay
+		if (i<=GoC_NumSin-1) {
+			Goc[i].end=GoC_EndIn
+		} else {
+			Goc[i].end=0
+		}
+	}
+}
+
+proc HeterogeneousGoC(){
+	xpanel("Golgi heterogeneus")   
+	xlabel("Heterogeneous mossy fibers")
+
+	xvalue("Interspike interval (ms)","Goc[0].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Goc[0].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Goc[0].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Goc[0].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Goc[0].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Goc[0].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Goc[0].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Goc[0].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Goc[0].BackgroundNoise", 1,"", 0, 0 )
+
+	xlabel("Golgi 2")
+	xvalue("Interspike interval (ms)","Goc[1].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Goc[1].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Goc[1].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Goc[1].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Goc[1].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Goc[1].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Goc[1].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Goc[1].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Goc[1].BackgroundNoise", 1,"", 0, 0 )
+
+
+	xlabel("Golgi 3")
+	xvalue("Interspike interval (ms)","Goc[2].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Goc[2].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Goc[2].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Goc[2].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Goc[2].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Goc[2].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Goc[2].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Goc[2].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Goc[2].BackgroundNoise", 1,"", 0, 0 )
+
+	xlabel("Golgi 4")
+	xvalue("Interspike interval (ms)","Goc[3].IntraBurstInterval", 1,"", 0, 0 )
+	xvalue("Interburst interval (ms)","Goc[3].InterBurstInterval", 1,"", 0, 0 )
+	xvalue("Spikes per burst","Goc[3].burst_len", 1,"", 0, 0 )
+	xvalue("Begin of the Bursts (ms)","Goc[3].start_burst", 1,"", 0, 0 )
+	xvalue("Begin of the Background (ms)","Goc[3].start_background", 1,"", 0, 0 )
+	xvalue("Background rate (Hz)","Goc[3].tonic", 1,"", 0, 0 )
+	xvalue("End of the Input (ms)","Goc[3].end", 1,"", 0, 0 )
+	xvalue("Burst Poisson Noise (0=Not)","Goc[3].InterBurstIntervalNoise", 1,"", 0, 0 )
+	xvalue("Background Poisson Noise (0=Not)","Goc[3].BackgroundNoise", 1,"", 0, 0 )
+
+	xpanel()
+}
+

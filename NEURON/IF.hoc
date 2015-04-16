@@ -1,0 +1,115 @@
+begintemplate Goc
+  public MF_AMPA_L,MF_NMDA_L,Area,GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  public MF_AMPA_SL,MF_NMDA_SL,Area,GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  public SpikeTrain, coord, nears_glom, myself
+  public soma, E, I, CC
+  public nears, target_glomi, targets
+  create soma
+  objref E, I
+  objref MF_AMPA_L,MF_NMDA_L,Area,GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  objref MF_AMPA_SL,MF_NMDA_SL,Area,GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  objref myself, nears_glom
+  objref SpikeTrain, nil, netcon, coord
+  objref nears,target_glomi,targets
+//  objref syn_mfA, syn_mfN, syn_grc, target
+//  objref synPFA, synPFN, synPFK, syn_PFA, syn_PFN, syn_PFK
+  
+  proc init() {
+    soma insert hh
+    soma {
+	coord = new Vector(3)
+	coord.x[0] = 0
+	coord.x[1] = 0
+	coord.x[2] = 0
+	E = new ExpSyn(0.5)
+	E = new ExpSyn(0.5)
+	I = new ExpSyn(0.5)
+	I.e = -80
+	
+	MF_AMPA_L = new List()
+	MF_NMDA_L = new List()
+	PF_AMPA_L = new List()
+	PF_NMDA_L = new List()
+	PF_KAIN_L = new List()
+	GABA_L = new List()
+	
+	MF_AMPA_SL = new List()
+	MF_NMDA_SL = new List()
+	PF_AMPA_SL = new List()
+	PF_NMDA_SL = new List()
+	PF_KAIN_SL = new List()
+	GABA_SL = new List()
+	
+	targets = new List()
+	target_glomi = new List()
+	nears = new List()
+	nears_glom = new List()
+//	conns = new List()
+	myself = new List()
+//	targets = new List()
+//	inh_sources = new List()
+//	exc_sources = new List()
+//	mf_exc_sources = new List()
+	
+	SpikeTrain=new Vector()
+	netcon=new NetCon(&v(0.5),nil)
+	netcon.threshold=-20
+	netcon.record(SpikeTrain)
+  }
+}
+endtemplate Goc
+
+begintemplate Grc
+  public MF_AMPA_L,MF_NMDA_L,Area,GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  public MF_AMPA_SL,MF_NMDA_SL,Area,GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  public SpikeTrain, coord, nears, myself
+  public soma, E, I, CC
+  public nears_glom,targets  
+  create soma
+  
+  objref E, I, CC
+  objref MF_AMPA_L,MF_NMDA_L,Area,GABA_L, PF_AMPA_L, PF_NMDA_L, PF_KAIN_L
+  objref MF_AMPA_SL,MF_NMDA_SL,Area,GABA_SL, PF_AMPA_SL, PF_NMDA_SL, PF_KAIN_SL
+  objref myself, nears //, conn, conns
+  objref SpikeTrain,nil,netcon, coord
+  objref nears_glom,targets
+  proc init() {
+    soma insert hh
+    soma {
+	coord = new Vector(3)
+	coord.x[0] = 0
+	coord.x[1] = 0
+	coord.x[2] = 0
+	E = new ExpSyn(0.5)
+	I = new ExpSyn(0.5)
+	I.e = -80
+	
+	MF_AMPA_L = new List()
+	MF_NMDA_L = new List()
+	PF_AMPA_L = new List()
+	PF_NMDA_L = new List()
+	PF_KAIN_L = new List()
+	GABA_L = new List()
+	
+	MF_AMPA_SL = new List()
+	MF_NMDA_SL = new List()
+	PF_AMPA_SL = new List()
+	PF_NMDA_SL = new List()
+	PF_KAIN_SL = new List()
+	GABA_SL = new List()
+	
+	nears = new List()
+	nears_glom = new List()
+//	conns = new List()
+	myself = new List()
+	targets = new List()
+//	inh_sources = new List()
+//	exc_sources = new List()
+
+	SpikeTrain=new Vector()
+	netcon=new NetCon(&v(0.5),nil)
+	netcon.threshold=-20
+	netcon.record(SpikeTrain)
+    }
+}
+endtemplate Grc

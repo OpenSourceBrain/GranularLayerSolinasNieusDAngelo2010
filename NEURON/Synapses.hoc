@@ -1,0 +1,49 @@
+create SynPool 
+access SynPool
+objref Exc[400],Inh[300]
+objref list_syn_Golgi
+list_syn_Golgi = new List()
+synstate = 0
+synstart = 1e9
+
+for i=0,2 {
+    for k=0, 25 {
+	Golgi[0].dend[i] Golgi[0].exc[(i*26)+k] = new Synapse(0.5)
+    }
+    for k=0, 8 {
+	Golgi[0].dend[i] Golgi[0].inh[(i*9)+k] = new Synapse(0.5)
+	Golgi[0].dend[i] Golgi[0].inh[(i*9)+k].Erev = -60
+    }
+}
+
+
+Exc_freq = .53
+n = 26 // Tot = 84
+for j=0, 2 {
+    for i=0, n-1 {
+	Exc[i+(j*n)] = new Golgi_SpikeGenerator(0.5) 
+	Exc[i+(j*n)].start	= 1e10
+	list_syn_Golgi.append(new NetCon(Exc[i+(j*n)], Golgi[0].exc[i+(j*n)], -20, 0.000, 1e-3))
+	Golgi[0].exc[i+(j*n)].gmax= 8000 // pS
+	Exc[i+(j*n)].fast_invl = 1000/Exc_freq
+	Exc[i+(j*n)].burst_len = 100
+	Exc[i+(j*n)].noise = 1
+	Exc[i+(j*n)].start = synstart
+    }
+}
+
+Inh_freq = 8
+n = 9 // Tot=30
+for j=0, 2 {
+    for i=0, n-1 {
+	Inh[i+(j*n)] = new Golgi_SpikeGenerator(0.5) 
+	Inh[i+(j*n)].start = 1e10
+	list_syn_Golgi.append(new NetCon(Inh[i+(j*n)], Golgi[0].inh[i+(j*n)], -20, 0.000, 1e-3))
+	Golgi[0].inh[i+(j*n)].gmax= 16000 // pS
+
+	Inh[i+(j*n)].fast_invl = 1000/Inh_freq
+	Inh[i+(j*n)].burst_len = 100
+	Inh[i+(j*n)].noise = 1
+	Inh[i+(j*n)].start = synstart
+    }
+}

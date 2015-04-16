@@ -1,0 +1,53 @@
+begintemplate Glom
+
+// Cell 
+public rosette,celltype
+public SpikeTrain, Spiking
+
+// Network
+public coord, target_grcs, target_gocs, src_goc, myself
+public farthest_glom, siblings, syn_goc
+
+create rosette
+
+// Cell
+objref SpikeTrain, coord, Spiking, myself
+
+
+// Network
+objref target_grcs, target_gocs, src_goc, netcon, nil
+objref farthest_glom, siblings,syn_goc
+
+proc init() {
+    
+    rosette {
+	nseg = 1 
+	diam = 35
+	L = 35
+	celsius = 23 // per default 
+	
+	celltype = 2
+	coord = new Vector(3)
+	coord.x[0] = 0
+	coord.x[1] = 0
+	coord.x[2] = 0
+	
+	Spiking = new MF_SpikeGenerator_SS(0.5)
+//	insert rp
+//	setpointer rp.vpoint, Spiking.y
+	target_grcs = new List()
+	target_gocs = new List()
+	src_goc = new List()
+	farthest_glom = new List()
+	siblings = new List()
+	syn_goc = new List()
+	
+	myself = new List()
+	
+	SpikeTrain = new Vector()
+	netcon = new NetCon(Spiking,nil)
+	netcon.record(SpikeTrain)
+	}
+}
+
+endtemplate Glom

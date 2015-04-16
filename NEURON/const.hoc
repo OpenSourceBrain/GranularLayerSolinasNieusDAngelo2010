@@ -1,0 +1,190 @@
+// Population numbers
+
+objref NetGoc, NetGrc, NetMf, NetSize, NetStep, NetDens, NetGlom, NetVol
+objref GrcCD, GrcPF, GocCD, GocAx, Gocdend, GlomCD, Grcdend
+objref Stim, NetVolGoc
+
+templ = 1 // 0 = leaky I&F, 1 = Conductance based
+
+rec = 0 // record curents activation inactivation
+
+// Synaptic paramenters
+mf_grc_d = 1 // ms
+mf_grc_w = 1e-3 // pS
+
+goc_grc_d = 1 // ms
+goc_grc_w = 1e-3 // pS
+
+// the scripts are made to model only rectangular portions of the GL!!!
+NetSize = new Matrix(2,3)
+// Rectangle size
+NetSize.x[0][0] = 100e-6 // transverse axis (m)
+NetSize.x[0][1] = 100e-6 // sagittal axis (m)
+NetSize.x[0][2] = 100e-6 // radial axis (m)
+// ???
+NetSize.x[1][0] = 100e-6 // transverse axis (m)
+NetSize.x[1][1] = NetSize.x[0][1] // sagittal axis (m)
+NetSize.x[1][2] = NetSize.x[0][2] // radial axis (m)
+
+NetVol = new Vector(2)
+NetVol.x[0] = NetSize.x[0][0]*NetSize.x[0][1]*NetSize.x[0][2]*1e9 // mm³
+NetVol.x[1] = NetSize.x[1][0]*NetSize.x[1][1]*NetSize.x[1][2]*1e9 // mm³
+
+GrcCD = new Matrix(4,3)
+GrcCD.x[0][0] = 4.17 // mean number of dends
+GrcCD.x[1][0] = 62 // 4 dends prob %
+GrcCD.x[2][0] = 22 // 5 dends prob %
+GrcCD.x[3][0] = 16 // 3 dends prob %
+GrcCD.x[0][1] = 6.6  // inh conv
+GrcCD.x[1][1] = 0
+GrcCD.x[2][1] = 0
+GrcCD.x[3][1] = 0
+GrcCD.x[0][2] = 40  // div
+GrcCD.x[1][2] = 2
+GrcCD.x[2][2] = 45
+GrcCD.x[3][2] = 55
+
+GrcDiam = 0 //6.3e-6
+GlomDiam = 0 //17e-6 // m
+
+Grcdend = new Vector(4)
+Grcdend.x[0] = 13.59e-6 + GrcDiam/2 + GlomDiam/2 // mean
+Grcdend.x[1] = 9.92e-6  // STD
+Grcdend.x[2] = GrcDiam/2 + GlomDiam/2  // min
+Grcdend.x[3] = 39.5e-6 + GrcDiam/2 + GlomDiam/2 // max
+
+GrcPF = new Vector(3)
+GrcPF.x[0] = 4.7e-3/2 // transverse axis
+GrcPF.x[1] = 5e-6 // sagittal axis
+GrcPF.x[2] = 5e-6  // radial axis
+
+GlomCD = new Matrix(4,4)
+// grc
+GlomCD.x[0][0] = 53 // div glom-> grc
+GlomCD.x[1][0] = 4  // std div glom -> grc
+GlomCD.x[2][0] = 48 // min
+GlomCD.x[3][0] = 58 // max
+// goc
+GlomCD.x[0][1] = 1 // # goc axons
+GlomCD.x[1][1] = 0 // std goc axons
+GlomCD.x[2][1] = 1 // min
+GlomCD.x[3][1] = 1 // max
+GlomCD.x[0][2] = 53 // total # of goc synapses
+GlomCD.x[1][2] = 0 // std
+GlomCD.x[2][2] = 53 // min
+GlomCD.x[3][2] = 53 // max
+GlomCD.x[0][3] = 1 // fraction of grcdends receiving an inhibition
+
+NetDens = new Vector(3) // #/mm³
+NetDens.x[0] = 4e6 // granule cells
+NetDens.x[1] = NetDens.x[0] / 420  // golgi cells
+NetDens.x[2] = NetDens.x[0] * GrcCD.x[0][0] / GlomCD.x[0][0] // glomeruli
+
+Gocdend = new Vector(6)
+// Apical dendrites
+Gocdend.x[0] = 50e-6 // transverse axis
+Gocdend.x[1] = 50e-6 // sagittal axis
+Gocdend.x[2] = NetSize.x[0][2] // radial axis
+// Basolateral dendrites
+Gocdend.x[3] = 100e-6 // Basolateral dendrites
+// To set the right God convergenge of Mf we should calc the prob of connection.
+// Given the volume spanned by the dend and the number of MF in that volume
+// so far i guess they are 50 MF connecting to 1 Goc
+
+GocAx = new Vector(3)
+GocAx.x[0] = 180e-6/2 // transverse axis
+GocAx.x[1] = 650e-6/2 // sagittal axis
+GocAx.x[2] = NetSize.x[0][2]/2 // radial axis
+// From Bramack08 the Goc axon is aligned along the saggital axis and occupies the entire GL
+
+GocCD = new Matrix(4,3)
+GocCD.x[0][0] = 300 // 1000  // exc conv PF  16800!!!!!!!!!!
+GocCD.x[1][0] = 10 // 1000
+GocCD.x[2][0] = 250 //900 // 15000 min
+GocCD.x[3][0] = 350 //1100 //13600 max
+GocCD.x[0][1] = 15 //6.8  // exc conv MF
+GocCD.x[1][1] = 3 //3.1
+GocCD.x[2][1] = 10 // 2
+GocCD.x[3][1] = 20 // 12
+// Golgi to Glom divergence
+GocCD.x[0][2] = 18 //int(NetDens.x[2]*GlomCD.x[0][1]/NetDens.x[1])-1
+GocCD.x[1][2] = 0 
+GocCD.x[2][2] = 0
+GocCD.x[3][2] = 0
+print "GocCD"
+GocCD.printf()
+
+// the scripts are made to model only CUBES!!!
+// Calculate the number of cells along each edge
+NetGrc = new Vector(4)
+NetGrc.x[3] = int(NetDens.x[0]*NetVol.x[1]) // total
+NetGrc.x[1] = ((NetGrc.x[3]*NetSize.x[1][1]^2)/(NetSize.x[1][0]*NetSize.x[1][2]))^(1/3) // # along transverse axis
+NetGrc.x[0] = (NetGrc.x[1]*NetSize.x[1][0]/NetSize.x[1][1]) // # along sagittal axis
+NetGrc.x[2] = (NetGrc.x[1]*NetSize.x[1][2]/NetSize.x[1][1])
+NetGrc.floor()
+NetGrc.add(1)
+for i=0,2 {if (NetGrc.x[i]==0) {NetGrc.x[i]=1}}
+
+NetGoc = new Vector(4)
+NetGoc.x[3] = int(NetDens.x[1]*NetVol.x[0])
+NetGoc.x[1] = (((NetGoc.x[3]*NetSize.x[0][1]^2)/(NetSize.x[0][0]*NetSize.x[0][2]))^(1/3))
+NetGoc.x[0] = (NetGoc.x[1]*NetSize.x[0][0]/NetSize.x[0][1])
+NetGoc.x[2] = (NetGoc.x[1]*NetSize.x[0][2]/NetSize.x[0][1])
+NetGoc.floor()
+for i=0,2 {if (NetGoc.x[i]==0) {NetGoc.x[i]=1}}
+
+NetGlom = new Vector(4)
+NetGlom.x[3] = int(int(NetDens.x[0]*NetVol.x[0]) * 4.17 / 53) // NetDens.x[2]*NetVol
+NetGlom.x[1] = (((NetGlom.x[3]*NetSize.x[0][1]^2)/(NetSize.x[0][0]*NetSize.x[0][2]))^(1/3))
+NetGlom.x[0] = (NetGlom.x[1]*NetSize.x[0][0]/NetSize.x[0][1])
+NetGlom.x[2] = (NetGlom.x[1]*NetSize.x[0][2]/NetSize.x[0][1])
+NetGlom.floor()
+NetGlom.add(1)
+for i=0,2 {if (NetGlom.x[i]==0) {NetGlom.x[i]=1}}
+
+printf("#golgi %d, #grc %d, #MF %d",NetGoc.x[3],NetGrc.x[3],NetGlom.x[3])
+printf("%d %d %d %d %d %d %d %d %d",NetGoc.x[0],NetGoc.x[1],NetGoc.x[2],NetGrc.x[0],NetGrc.x[1],NetGrc.x[2],NetGlom.x[0],NetGlom.x[1],NetGlom.x[2])
+printf("#Real %d %d %d",NetGoc.x[0]*NetGoc.x[1]*NetGoc.x[2],NetGrc.x[0]*NetGrc.x[1]*NetGrc.x[2],NetGlom.x[0]*NetGlom.x[1]*NetGlom.x[2])
+
+NetStep = new Matrix(3,3) // dim x type; x,y,z x grc,gol,glom
+for i=0,2 { // loop over dim
+    if (NetGrc.x[i]>1) {NetStep.x[i][0] = NetSize.x[1][i]/NetGrc.x[i]} else {NetStep.x[i][0] = 0}
+    }
+
+for i=0,2 { // loop over dim
+    if (NetGoc.x[i]>1) {NetStep.x[i][1] = NetSize.x[0][i]/NetGoc.x[i]} else {NetStep.x[i][1] = 0}
+    }
+
+for i=0,2 { // loop over dim
+    if (NetGlom.x[i]>1) {NetStep.x[i][2] = NetSize.x[0][i]/NetGlom.x[i]} else {NetStep.x[i][2] = 0}
+    }
+
+print "NetSetp"
+NetStep.printf()
+
+// Input rates
+
+Stim = new Vector(6)
+Stim.x[0] = 100 // intra burst freq (sp/s)
+Stim.x[1] = 100 // inter burst time (ms)
+Stim.x[2] = 5  // # spikes
+Stim.x[3] = 10 // start bursting (ms)
+Stim.x[4] = 10 // background firing rate
+Stim.x[5] = .9 // background firing rate noise
+
+// proc OutputSet() {
+//     strdef command
+//     sprint(command,"if [ -d %s ];then mkdir -p %s;fi",$s1,$s1)
+//     system(command)
+// }
+
+// // Output files
+// strdef outputdir
+// outputdir = "data"
+// OutputSet(outputdir)
+
+
+objref gcorr
+gcorr = new Vector(10)
+gcorr.x[0] = 1
+gcorr.x[1] = 1

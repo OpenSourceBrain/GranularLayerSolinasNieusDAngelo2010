@@ -1,0 +1,41 @@
+// ********* Shape plot della rete **********
+// Grcs
+objref net_show[3], seclist
+seclist = new SectionList()
+net_show[0] = new PlotShape(seclist)
+fast_flush_list.append(net_show[0])
+for i=0, NetGrc.x[0]*NetGrc.x[1]*NetGrc.x[2]-1 {
+    net_show[0].hinton(&grc.object(i).soma.v(.5), grc.object(i).coord.x[2]*1e6, grc.object(i).coord.x[1]*1e6, 1)
+    }
+for i=0, NetGoc.x[0]*NetGoc.x[1]*NetGoc.x[2]-1 {
+    net_show[0].hinton(&goc.object(i).soma.v(.5), goc.object(i).coord.x[2]*1e6, goc.object(i).coord.x[1]*1e6, 4)
+}
+for i=0, NetGlom.x[0]*NetGlom.x[1]*NetGlom.x[2]-1 {
+    net_show[0].hinton(&glom.object(i).rosette.v(.5), glom.object(i).coord.x[2]*1e6, glom.object(i).coord.x[1]*1e6, 2)
+}
+net_show[0].line(-NetSize.x[0][2]/2*1e6,-NetSize.x[0][1]/2*1.1*1e6)
+net_show[0].line((-NetSize.x[0][2]/2+10e-6)*1e6,-NetSize.x[0][1]/2*1.1*1e6)
+net_show[0].label(-NetSize.x[0][2]/2*1e6,-NetSize.x[0][1]/2*1.1*1e6,"Max grc dend")
+net_show[0].size(-NetSize.x[0][2]/1.5*1e6,NetSize.x[0][2]/1.5*1e6,-NetSize.x[0][1]/1.5*1e6,NetSize.x[0][1]/1.5*1e6)
+net_show[0].exec_menu("Shape Plot")
+net_show[0].exec_menu("View = plot")
+
+// // Gocs
+// net_show[1] = new PlotShape(seclist)
+// fast_flush_list.append(net_show[1])
+// for i=0, NetGoc.x[0]*NetGoc.x[1]-1 {
+//     net_show[1].hinton(&goc.object(i).soma.v(.5), i%NetGoc.x[0], int(i/NetGoc.x[0]), .25)
+// }
+// net_show[1].size(-3,NetGoc.x[0]+2,-3,NetGoc.x[1]+2)
+// net_show[1].exec_menu("Shape Plot")
+// net_show[1].exec_menu("View = plot")
+
+// // Gocs
+// net_show[2] = new PlotShape(seclist)
+// fast_flush_list.append(net_show[2])
+// for i=0, NetGlom.x[0]*NetGlom.x[1]-1 {
+//     net_show[2].hinton(&glom.object(i).rosette.v(.5), i%NetGlom.x[0], int(i/NetGlom.x[0]), .25)
+// }
+// net_show[2].size(-3,NetGlom.x[0]+2,-3,NetGlom.x[1]+2)
+// net_show[2].exec_menu("Shape Plot")
+// net_show[2].exec_menu("View = plot")
