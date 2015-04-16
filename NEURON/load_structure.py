@@ -32,9 +32,7 @@ def read_matrix_file(dirname, filename,separator = None):
         
     return matrix
 
-print structure
-
-def dig_structure_dict(d):
+def dig_structure_dict(data_dir,d):
     for it_n,it in d.iteritems():
         if 'filename' in it.keys():
             print 'loading: ', it['filename'], it['Comment'], '...'
@@ -45,7 +43,7 @@ def dig_structure_dict(d):
             else:
                 it['data'] = read_lol_file(data_dir,it['filename'])
         else:
-            dig_structure_dict(it)
+            dig_structure_dict(data_dir,it)
     return None
 
 def load_Solinasetal2010_structure():
@@ -63,7 +61,13 @@ def load_Solinasetal2010_structure():
                   'convergence':{'filename':'conv_goc_glom_sources.lst','Comment':'Convergence of glomeruli to Golgi cells'},
                   'divergence_to_goc':{'filename':'div_grc_targets.lst','Comment':'Divergence of granule cell axons to Golgi cells'}}
              }
-    dig_structure_dict(structure)
+
+    print structure
+
+    dig_structure_dict(data_dir,structure)
 
     return structure
-    
+
+
+if __name__ == "__main__":
+    load_Solinasetal2010_structure()

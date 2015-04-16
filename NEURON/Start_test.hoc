@@ -1,7 +1,7 @@
 xopen("$(NEURONHOME)/lib/hoc/noload.hoc") 
 load_proc("nrnmainmenu") 
-nrnmainmenu() 
-nrncontrolmenu()
+//nrnmainmenu() 
+//nrncontrolmenu()
 
 strdef dirname
 dirname="SimData"
