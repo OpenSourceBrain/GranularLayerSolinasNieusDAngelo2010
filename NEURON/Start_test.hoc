@@ -1,0 +1,116 @@
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc") 
+load_proc("nrnmainmenu") 
+nrnmainmenu() 
+nrncontrolmenu()
+
+strdef dirname
+dirname="SimData"
+
+struct_rand = 198456
+
+objref saveray, Origin
+saveray = new Vector(3)
+saveray.x[0] = 10e-6
+saveray.x[1] = 20e-6
+saveray.x[2] = 25e-6
+
+Origin = new Vector(3)
+Origin.x(0) = 0
+Origin.x(1) = 0
+Origin.x(2) = 0
+
+
+// Load saving functions
+xopen("Save_data.hoc")
+
+// Load configuration
+load_file("const.hoc")
+
+// **** Create cells ****
+// Load templates
+if (templ) {
+    load_file("GRANULE_Cell.hoc")  
+    load_file("Golgi_template.hoc")  
+}else{
+    load_file("IF.hoc")
+}
+load_file("Glom_T.hoc")
+
+// Load building functions
+load_file("build_vi.hoc")
+
+// Create cell arrays
+objref grc
+objref goc
+objref glom
+
+grc = new List()
+goc = new List()
+glom = new List()
+
+create empty
+access empty
+
+planarmap(NetGrc,NetStep.getcol(0),"Grc","grc",Origin,1)
+sprint(command,"%s/%s",dirname,"grc_coord.lst")
+pos2file(command,grc)
+
+planarmap(NetGoc,NetStep.getcol(1),"Goc","goc",Origin,1)
+
+planarmap(NetGlom,NetStep.getcol(2),"Glom","glom",Origin,1)
+sprint(command,"%s/%s",dirname,"glom_coord.lst")
+pos2file(command,glom)
+
+bursting(glom,0,0,glom.count(),Stim)
+// randomize(glom,Stim.x[3],Stim.x[3]/2,10)
+
+cvode.active(1)
+cvode.use_local_dt(1)
+//cvode.atol(0.0001)
+
+// goc.object(0).soma.cai
+// ********* Shape plot della rete **********
+// load_file("show.hoc")
+
+load_file("inspect.hoc")
+
+glom2grc_connect(grc,glom,Grcdend,GrcCD.getcol(0))
+
+// Let each glom know the farthes other glom reached by its tragets grcs
+Div_glom(glom,"glom",grc,"grc",dirname)
+
+mesh = 0
+goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0,mesh,grc)
+// goc2grc_connect_comp(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0)
+// block tonic GABA
+// for i = 0,grc.count()-1 {
+//     grc.o(i).soma.gbar_GRANULE_LKG2(0.5) = 0
+// }
+//setgmax_grc(grc,gcorr)
+
+grc2goc_connect(goc,grc,GrcPF,Gocdend,GocCD.getcol(0),GrcCD,0)
+//setgmax_goc(goc,gcorr)
+
+glom2goc_connect(goc,glom,Gocdend,GocCD,GlomCD)
+Div_glom(glom,"glom",grc,"goc",dirname)
+
+sprint(command,"%s/%s",dirname,"goc_coord.lst")
+pos2file(command,goc)
+
+// Randomize synaptic weights
+//randomize_syn(grc,1,0.4,0,5,2,1)
+//randomize_syn(goc,1,0.4,0,5,2,0)
+
+
+// ++++++ Show Netowrk Structure +++++++
+
+Div(goc,"goc",dirname,1,mesh)
+Conv_goc(goc,"goc",dirname)
+Conv_glom(glom,"glom.lst",dirname)
+Conv_grc(grc,"grc.lst",dirname)
+Div(grc,"grc",dirname,0)
+
+// Shape plot della rete
+// load_file("Makemovie.hoc")
+
+
