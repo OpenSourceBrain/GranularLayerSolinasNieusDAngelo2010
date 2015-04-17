@@ -40,8 +40,9 @@ def generate_granule_cell_layer(network_id,
                                 validate = True,
                                 random_seed = 1234,
                                 generate_lems_simulation = False,
+                                max_plotted_cells_per_pop = 10,
                                 duration = 500,  # ms
-                                dt = 0.05,
+                                dt = 0.025,
                                 temperature="32.0 degC"):
 
     seed(random_seed)
@@ -240,12 +241,12 @@ def generate_granule_cell_layer(network_id,
         of_gol = 'Volts_file_gol'
         ls.create_output_file(of_gol, "v_gol.dat")
 
-        for i in range(numCells_grc):
+        for i in range(min(numCells_grc,max_plotted_cells_per_pop)):
             quantity = "%s/%i/%s/v"%(grc_group, i, grc_group_component)
             ls.add_line_to_display(disp_grc, "GrC %i: Vm"%i, quantity, "1mV", pynml.get_next_hex_color())
             ls.add_column_to_output_file(of_grc, "v_%i"%i, quantity)
             
-        for i in range(numCells_gol):
+        for i in range(min(numCells_gol,max_plotted_cells_per_pop)):
             quantity = "%s/%i/%s/v"%(gol_group, i, gol_group_component)
             ls.add_line_to_display(disp_gol, "Golgi %i: Vm"%i, quantity, "1mV", pynml.get_next_hex_color())
             ls.add_column_to_output_file(of_gol, "v_%i"%i, quantity)
