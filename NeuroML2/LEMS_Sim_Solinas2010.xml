@@ -1,0 +1,97 @@
+<Lems>
+    
+    <!-- 
+
+        This LEMS file has been automatically generated using PyNeuroML v0.0.5
+
+     -->
+    
+    <!-- Specify which component to run -->
+    <Target component="Sim_Solinas2010"/>
+
+    <!-- Include core NeuroML2 ComponentType definitions -->
+    <Include file="Cells.xml"/>
+    <Include file="Networks.xml"/>
+    <Include file="Simulation.xml"/>
+    
+    <Include file="Granule_98.cell.nml"/>
+    <Include file="Gran_CaHVA_98.channel.nml"/>
+    <Include file="Gran_CaPool_98.nml"/>
+    <Include file="Gran_H_98.channel.nml"/>
+    <Include file="Gran_KA_98.channel.nml"/>
+    <Include file="Gran_KCa_98.channel.nml"/>
+    <Include file="Gran_KDr_98.channel.nml"/>
+    <Include file="Gran_NaF_98.channel.nml"/>
+    <Include file="GranPassiveCond.channel.nml"/>
+    <Include file="Golgi_98.cell.nml"/>
+    <Include file="Golgi_CaHVA_CML.channel.nml"/>
+    <Include file="Golgi_CaPool_CML.nml"/>
+    <Include file="Golgi_H_CML.channel.nml"/>
+    <Include file="Golgi_KA_CML.channel.nml"/>
+    <Include file="Golgi_KCa_CML.channel.nml"/>
+    <Include file="Golgi_KDr_CML.channel.nml"/>
+    <Include file="Golgi_NaF_CML.channel.nml"/>
+    <Include file="GolgiPassiveCond.channel.nml"/>
+    <Include file="Solinas2010.net.nml"/>
+    <Include file="Granule_98.cell.nml"/>
+    <Include file="Golgi_98.cell.nml"/>
+    <Include file="AMPA_GranGol.synapse.nml"/>
+    <Include file="GABAA.synapse.nml"/>
+   
+    <Simulation id="Sim_Solinas2010" length="500ms" step="0.025ms" target="Solinas2010">
+        
+        <Display id="display_grc" title="Voltages Granule cells" timeScale="1ms" xmin="-50.0" xmax="550.0" ymin="-95" ymax="-38">
+            <Line id="GrC 0: Vm" quantity="Grans/0/Granule_98/v" scale="1mV" color="#f7697f" timeScale="1ms"/>
+            <Line id="GrC 1: Vm" quantity="Grans/1/Granule_98/v" scale="1mV" color="#70d3da" timeScale="1ms"/>
+            <Line id="GrC 2: Vm" quantity="Grans/2/Granule_98/v" scale="1mV" color="#01eaf6" timeScale="1ms"/>
+            <Line id="GrC 3: Vm" quantity="Grans/3/Granule_98/v" scale="1mV" color="#e935b8" timeScale="1ms"/>
+            <Line id="GrC 4: Vm" quantity="Grans/4/Granule_98/v" scale="1mV" color="#f073ee" timeScale="1ms"/>
+            <Line id="GrC 5: Vm" quantity="Grans/5/Granule_98/v" scale="1mV" color="#950cdd" timeScale="1ms"/>
+            <Line id="GrC 6: Vm" quantity="Grans/6/Granule_98/v" scale="1mV" color="#abeb95" timeScale="1ms"/>
+            <Line id="GrC 7: Vm" quantity="Grans/7/Granule_98/v" scale="1mV" color="#157cf9" timeScale="1ms"/>
+            <Line id="GrC 8: Vm" quantity="Grans/8/Granule_98/v" scale="1mV" color="#c43818" timeScale="1ms"/>
+            <Line id="GrC 9: Vm" quantity="Grans/9/Granule_98/v" scale="1mV" color="#3c9f90" timeScale="1ms"/>
+        </Display>
+        
+        <Display id="display_gol" title="Voltages Golgi cells" timeScale="1ms" xmin="-50.0" xmax="550.0" ymin="-95" ymax="-38">
+            <Line id="Golgi 0: Vm" quantity="Golgis/0/Golgi_98/v" scale="1mV" color="#07e36d" timeScale="1ms"/>
+            <Line id="Golgi 1: Vm" quantity="Golgis/1/Golgi_98/v" scale="1mV" color="#c9ed02" timeScale="1ms"/>
+            <Line id="Golgi 2: Vm" quantity="Golgis/2/Golgi_98/v" scale="1mV" color="#589949" timeScale="1ms"/>
+            <Line id="Golgi 3: Vm" quantity="Golgis/3/Golgi_98/v" scale="1mV" color="#9f8f5f" timeScale="1ms"/>
+            <Line id="Golgi 4: Vm" quantity="Golgis/4/Golgi_98/v" scale="1mV" color="#9da618" timeScale="1ms"/>
+            <Line id="Golgi 5: Vm" quantity="Golgis/5/Golgi_98/v" scale="1mV" color="#2607ad" timeScale="1ms"/>
+            <Line id="Golgi 6: Vm" quantity="Golgis/6/Golgi_98/v" scale="1mV" color="#2edf07" timeScale="1ms"/>
+            <Line id="Golgi 7: Vm" quantity="Golgis/7/Golgi_98/v" scale="1mV" color="#1d4a2b" timeScale="1ms"/>
+            <Line id="Golgi 8: Vm" quantity="Golgis/8/Golgi_98/v" scale="1mV" color="#03be0e" timeScale="1ms"/>
+            <Line id="Golgi 9: Vm" quantity="Golgis/9/Golgi_98/v" scale="1mV" color="#7c9bbf" timeScale="1ms"/>
+        </Display>
+        
+        <OutputFile id="Volts_file_grc" fileName="v_grc.dat">
+            <OutputColumn id="v_0" quantity="Grans/0/Granule_98/v"/> 
+            <OutputColumn id="v_1" quantity="Grans/1/Granule_98/v"/> 
+            <OutputColumn id="v_2" quantity="Grans/2/Granule_98/v"/> 
+            <OutputColumn id="v_3" quantity="Grans/3/Granule_98/v"/> 
+            <OutputColumn id="v_4" quantity="Grans/4/Granule_98/v"/> 
+            <OutputColumn id="v_5" quantity="Grans/5/Granule_98/v"/> 
+            <OutputColumn id="v_6" quantity="Grans/6/Granule_98/v"/> 
+            <OutputColumn id="v_7" quantity="Grans/7/Granule_98/v"/> 
+            <OutputColumn id="v_8" quantity="Grans/8/Granule_98/v"/> 
+            <OutputColumn id="v_9" quantity="Grans/9/Granule_98/v"/> 
+        </OutputFile>
+        
+        <OutputFile id="Volts_file_gol" fileName="v_gol.dat">
+            <OutputColumn id="v_0" quantity="Golgis/0/Golgi_98/v"/> 
+            <OutputColumn id="v_1" quantity="Golgis/1/Golgi_98/v"/> 
+            <OutputColumn id="v_2" quantity="Golgis/2/Golgi_98/v"/> 
+            <OutputColumn id="v_3" quantity="Golgis/3/Golgi_98/v"/> 
+            <OutputColumn id="v_4" quantity="Golgis/4/Golgi_98/v"/> 
+            <OutputColumn id="v_5" quantity="Golgis/5/Golgi_98/v"/> 
+            <OutputColumn id="v_6" quantity="Golgis/6/Golgi_98/v"/> 
+            <OutputColumn id="v_7" quantity="Golgis/7/Golgi_98/v"/> 
+            <OutputColumn id="v_8" quantity="Golgis/8/Golgi_98/v"/> 
+            <OutputColumn id="v_9" quantity="Golgis/9/Golgi_98/v"/> 
+        </OutputFile>
+        
+    </Simulation>
+
+</Lems>
