@@ -144,7 +144,7 @@ def generate_granule_cell_layer(network_id,
         # Connect Granule cells to Golgi cells
         for i in range(0, numCells_grc):
             # get targets for grc[i] from the structure dict
-            print 'Granule ', i , structure['Granules']['divergence_to_goc']['data'][i][1:]
+            # print 'Granule ', i , structure['Granules']['divergence_to_goc']['data'][i][1:]
             for j in structure['Granules']['divergence_to_goc']['data'][i][1:]:
                 add_connection(proj_grc_gol, count_grc_gol, grc_group, grc_group_component, i, 0, gol_group, gol_group_component, j, 0)
                 count_grc_gol+=1
@@ -152,8 +152,8 @@ def generate_granule_cell_layer(network_id,
         # Connect Golgi cells to Granule cells
         for i in range(0, numCells_gol):
             # get targets glomeruli for goc[i] from the lol in structure dict
-            print 'Golgi ', i
-            print structure['Golgis']['divergence_to_glom']['data'][i][1:]
+            # print 'Golgi ', i
+            # print structure['Golgis']['divergence_to_glom']['data'][i][1:]
             for k in structure['Golgis']['divergence_to_glom']['data'][i][1:]:
                 # get target granule cells for glom[k] from the lol in structure dict
                 # print 'Glom ', k

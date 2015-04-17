@@ -29,7 +29,11 @@ def read_matrix_file(dirname, filename,separator = None):
         matrix = np.loadtxt(dirname+filename)
     except IOError:
         print 'Cannot open', dirname+filename
-        
+
+    # Convert from SI units to um
+    matrix[:,:2] = matrix[:,:2] * 1e6
+    # print matrix
+    
     return matrix
 
 def dig_structure_dict(data_dir,d):
