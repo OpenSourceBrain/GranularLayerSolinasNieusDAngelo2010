@@ -5,7 +5,6 @@ and load it into a PYTHON dictionary
 """
 import load_structure as loader
 import os
-import ipdb
 
 def generate_solinas2010():
     # Load a shor version of the Start.hoc file
