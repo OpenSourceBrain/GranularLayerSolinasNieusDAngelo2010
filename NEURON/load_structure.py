@@ -31,7 +31,7 @@ def read_matrix_file(dirname, filename,separator = None):
         print 'Cannot open', dirname+filename
 
     # Convert from SI units to um
-    matrix[:,:2] = matrix[:,:2] * 1e6
+    matrix[:,:3] = matrix[:,:3] * 1e6
     # print matrix
     
     return matrix
