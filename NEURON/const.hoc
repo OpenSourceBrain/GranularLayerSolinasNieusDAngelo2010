@@ -18,9 +18,9 @@ goc_grc_w = 1e-3 // pS
 // the scripts are made to model only rectangular portions of the GL!!!
 NetSize = new Matrix(2,3)
 // Rectangle size
-NetSize.x[0][0] = 100e-6 // transverse axis (m)
-NetSize.x[0][1] = 100e-6 // sagittal axis (m)
-NetSize.x[0][2] = 100e-6 // radial axis (m)
+NetSize.x[0][0] = 60e-6 // transverse axis (m)
+NetSize.x[0][1] = 60e-6 // sagittal axis (m)
+NetSize.x[0][2] = 60e-6 // radial axis (m)
 // ???
 NetSize.x[1][0] = 100e-6 // transverse axis (m)
 NetSize.x[1][1] = NetSize.x[0][1] // sagittal axis (m)
@@ -116,7 +116,7 @@ GocCD.printf()
 
 // the scripts are made to model only CUBES!!!
 // Calculate the number of cells along each edge
-NetGrc = new Vector(4)
+NetGrc = new Vector(4)    
 NetGrc.x[3] = int(NetDens.x[0]*NetVol.x[1]) // total
 NetGrc.x[1] = ((NetGrc.x[3]*NetSize.x[1][1]^2)/(NetSize.x[1][0]*NetSize.x[1][2]))^(1/3) // # along transverse axis
 NetGrc.x[0] = (NetGrc.x[1]*NetSize.x[1][0]/NetSize.x[1][1]) // # along sagittal axis
@@ -126,11 +126,36 @@ NetGrc.add(1)
 for i=0,2 {if (NetGrc.x[i]==0) {NetGrc.x[i]=1}}
 
 NetGoc = new Vector(4)
-NetGoc.x[3] = int(NetDens.x[1]*NetVol.x[0])
+func max(){
+    if ($1 >= $2){
+        return $1
+	print 1
+    } else {
+        return $2
+	print 2
+	}
+    }
+
+NetGoc.x[3] = max(1,int(NetDens.x[1]*NetVol.x[0])) // Number of Gocs
 NetGoc.x[1] = (((NetGoc.x[3]*NetSize.x[0][1]^2)/(NetSize.x[0][0]*NetSize.x[0][2]))^(1/3))
 NetGoc.x[0] = (NetGoc.x[1]*NetSize.x[0][0]/NetSize.x[0][1])
 NetGoc.x[2] = (NetGoc.x[1]*NetSize.x[0][2]/NetSize.x[0][1])
 NetGoc.floor()
+// print "NetGoc ", NetGoc.printf()
+if  (NetGoc.x[3] > 1) {
+    if (NetGoc.x[3] < 8) {
+	if (NetGoc.x[3] <= 7) {
+	    if (NetGoc.x[3] <= 3) {
+		NetGoc.x[0] = 2
+	    } else {
+		NetGoc.x[0] = 2
+		NetGoc.x[1] = 2
+	    }    
+	}
+    }
+}
+print "NetGoc ", NetGoc.printf()
+
 for i=0,2 {if (NetGoc.x[i]==0) {NetGoc.x[i]=1}}
 
 NetGlom = new Vector(4)

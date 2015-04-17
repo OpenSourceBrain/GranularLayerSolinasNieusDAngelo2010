@@ -429,6 +429,7 @@ proc glom2grc_connect() {local n , i, nsyn, rnd, idx localobj dist, dist_copy
     
     u.normal($o3.x[0]*1e6,$o3.x[1]*1e6)
     for i=0, $o1.count()-1 { // grc's loop
+	// print $o1.count(),i
 	$o1.o(i).nears.remove_all()
 	dist.resize(0)
 	for j=0, $o2.count()-1 { // glom's loop
@@ -453,26 +454,32 @@ proc glom2grc_connect() {local n , i, nsyn, rnd, idx localobj dist, dist_copy
 	// print $o1.o(i).nears.count()
 	idx = 0
 	// Select nsyn glomi drawing the distance from the normal dist
+	// print 2
 	for ns = 1,nsyn {
-	    rnd = u.repick()*1e-6
-	    while (rnd <= $o3.x[2] || rnd > $o3.x[3] ) rnd = u.repick()
-	    // print "rnd ",rnd
-	    dist_copy.copy(dist)
-	    // dist_copy.printf()
-	    // print dist_copy.sub(rnd).abs().min()
-	    idx = dist_copy.indwhere("==",dist_copy.sub(rnd).abs().min())
-	    // print idx
-	    $o1.o(i).nears_glom.append($o1.o(i).nears.o(idx))
-	    $o1.o(i).nears.remove(idx)
-//	    $o1.o(i).tmp.append(dist.x[idx])
-	    dist.remove(idx)
+	    if ($o1.o(i).nears.count > 0) {
+		rnd = u.repick()*1e-6
+		while (rnd <= $o3.x[2] || rnd > $o3.x[3] ) rnd = u.repick()
+		// print "rnd ",rnd
+		dist_copy.copy(dist)
+		// dist_copy.printf()
+		// print dist_copy.sub(rnd).abs().min()
+		idx = dist_copy.indwhere("==",dist_copy.sub(rnd).abs().min())
+		// print idx
+		$o1.o(i).nears_glom.append($o1.o(i).nears.o(idx))
+		// print $o1.o(i).nears.count,idx
+		$o1.o(i).nears.remove(idx)
+		// print 3
+		//	    $o1.o(i).tmp.append(dist.x[idx])
+		// print dist.printf()
+		dist.remove(idx)
+		// print 4
+	    }
 	}
 // 	print "selected ", $o1.o(i).nears_glom.count()
 // 	print $o1.o(i).nears.count()
 // 	print $o1.o(i).tmp.size()
 // 	print dist.size()
 //	access $o1.o(i).soma
-	
 	for j=0, $o1.o(i).nears_glom.count()-1 {
 	    $o1.o(i).soma $o1.o(i).MF_AMPA_L.append(new GRANULE_Ampa_det_vi(0.5))
 	    $o1.o(i).soma $o1.o(i).MF_NMDA_L.append(new GRANULE_Nmda_det_vi(0.5))
@@ -507,7 +514,7 @@ proc sort_list() {local i localobj vvd_sidx, sidx_L
 }
 
 proc goc2grc_connect() { local n,i,j,k,nglom, n_in_syn, idx, idx2 localobj vvd, u, lo_glomi
-    // Arguments: 1 Gloms,2 Gocs,3 GocAx, 4 GocCD, 5 GlomCD, 6 Grc dend length, 7 Netsize, 8 No doubleInh, 9 Mesh, 10 grc list
+    // Arguments: 1 Gloms,2 Gocs,3 GocAx, 4 GocCD, 5 GlomCD, 6 Grc dend length, 7 Netsize, 8 No doubleInh, 9 Mesh, 10 grc list, 11 append_extra_gocs
     // goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3])
     vvd = new Vector(0)
     u = new Random()
@@ -657,100 +664,101 @@ proc goc2grc_connect() { local n,i,j,k,nglom, n_in_syn, idx, idx2 localobj vvd, 
 	    }
 	}
 	// print "Second round - Leftover glomi ",lo_glomi.count()
-	
-	while (lo_glomi.count()>0) {
-	    // add an extra Goc
-	    $o2.append(new Goc(rec))
-	    c = $o2.count()-1
-	    rndo.o(0).uniform(-$o7.x[0][0]*.5,$o7.x[0][0]*.5)
-	    rndo.o(1).uniform(-$o7.x[0][1]*.5,$o7.x[0][1]*.5)
-	    rndo.o(2).uniform(-$o7.x[0][2]*.5,$o7.x[0][2]*.5)
-	    $o2.o(c).coord.x[0] = rndo.o(0).repick()
-	    $o2.o(c).coord.x[1] = rndo.o(1).repick()
-	    $o2.o(c).coord.x[2] = rndo.o(2).repick()
-	    // print " Total number of Gocs: ", $o2.count()
-	    
-	    vvd.resize(0)
-	    // select as much glomi as possible
-	    // All gloms within  $o3 3D um
-	    // print " Nears ", c
-	    for j=0, lo_glomi.count()-1 { // destination's loop: all the left over glomi
-		// The glom should be within the Goc axon reach and not being inhibited already
-		// print j, " ",lo_glomi.o(j).src_goc.count() < $o5.x[0][1], " ", p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3), " ", lo_glomi.count() < GocCD.x[0][2], " ",lo_glomi.count()
-		if ( lo_glomi.o(j).src_goc.count() < $o5.x[0][1] && (p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3) || lo_glomi.count() < GocCD.x[0][2]) ) {
-		    $o2.o(c).nears.append(lo_glomi.o(j))
-		    vvd.append(p2pdist3D_out(lo_glomi.o(j),$o2.o(c)))
-		}
-	    }
-	    // Sort the nears from the closest to the fardest
-	    sort_list($o2.o(c).nears,vvd)
-	    
-	    // print "GoC ",c," Nears ",$o2.o(c).nears.count()
-	    while ($o2.o(c).nears.count()>0 && $o2.o(c).target_glomi.count()<GocCD.x[0][2] ) { // Select the needed number of glomi
-		if (use_rand) {
-		    rnd = int(u.uniform(1, $o2.o(c).nears.count()))-1
-		}else {
-		    rnd = 0
-		}		    
-		// print "Nears ",$o2.o(c).nears.count(), " ",rnd
-		if ($o2.o(c).target_glomi.count()==0) {
-		    //print "Init "
-		    $o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
-		    lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
-		} else {
-		    check = 1
-		    //print "Filling"
-		    // If one of the glomi already selected is too close then skip this one
-		    for k = 0, $o2.o(c).target_glomi.count()-1 {
-			//		    print "Checking ", rnd
-			for h=0,$o2.o(c).target_glomi.o(k).siblings.count()-1 {
-			    //print "sibling ",$o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(c).nears.o(rnd))
-			    if ($o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)) == $o1.index($o2.o(c).nears.o(rnd))) {
-				//	print "Rejected"
-				check = $8
-			    }
-			}
+	if ($11) {
+	    while (lo_glomi.count()>0) {
+		// add an extra Goc
+		$o2.append(new Goc(rec))
+		c = $o2.count()-1
+		rndo.o(0).uniform(-$o7.x[0][0]*.5,$o7.x[0][0]*.5)
+		rndo.o(1).uniform(-$o7.x[0][1]*.5,$o7.x[0][1]*.5)
+		rndo.o(2).uniform(-$o7.x[0][2]*.5,$o7.x[0][2]*.5)
+		$o2.o(c).coord.x[0] = rndo.o(0).repick()
+		$o2.o(c).coord.x[1] = rndo.o(1).repick()
+		$o2.o(c).coord.x[2] = rndo.o(2).repick()
+		// print " Total number of Gocs: ", $o2.count()
+		
+		vvd.resize(0)
+		// select as much glomi as possible
+		// All gloms within  $o3 3D um
+		// print " Nears ", c
+		for j=0, lo_glomi.count()-1 { // destination's loop: all the left over glomi
+		    // The glom should be within the Goc axon reach and not being inhibited already
+		    // print j, " ",lo_glomi.o(j).src_goc.count() < $o5.x[0][1], " ", p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3), " ", lo_glomi.count() < GocCD.x[0][2], " ",lo_glomi.count()
+		    if ( lo_glomi.o(j).src_goc.count() < $o5.x[0][1] && (p2pdist3D(lo_glomi.o(j),$o2.o(c),$o3) || lo_glomi.count() < GocCD.x[0][2]) ) {
+			$o2.o(c).nears.append(lo_glomi.o(j))
+			vvd.append(p2pdist3D_out(lo_glomi.o(j),$o2.o(c)))
 		    }
-		    //print "ckeck ", check
-		    if (check) {
-			// print "Accepted ", j, " ", (j<GocCD.x[0][2]), " ",rnd
+		}
+		// Sort the nears from the closest to the fardest
+		sort_list($o2.o(c).nears,vvd)
+		
+		// print "GoC ",c," Nears ",$o2.o(c).nears.count()
+		while ($o2.o(c).nears.count()>0 && $o2.o(c).target_glomi.count()<GocCD.x[0][2] ) { // Select the needed number of glomi
+		    if (use_rand) {
+			rnd = int(u.uniform(1, $o2.o(c).nears.count()))-1
+		    }else {
+			rnd = 0
+		    }		    
+		    // print "Nears ",$o2.o(c).nears.count(), " ",rnd
+		    if ($o2.o(c).target_glomi.count()==0) {
+			//print "Init "
 			$o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
 			lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+		    } else {
+			check = 1
+			//print "Filling"
+			// If one of the glomi already selected is too close then skip this one
+			for k = 0, $o2.o(c).target_glomi.count()-1 {
+			    //		    print "Checking ", rnd
+			    for h=0,$o2.o(c).target_glomi.o(k).siblings.count()-1 {
+				//print "sibling ",$o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)), " rnd ", $o1.index($o2.o(c).nears.o(rnd))
+				if ($o1.index($o2.o(c).target_glomi.o(k).siblings.o(h)) == $o1.index($o2.o(c).nears.o(rnd))) {
+				    //	print "Rejected"
+				    check = $8
+				}
+			    }
+			}
+			//print "ckeck ", check
+			if (check) {
+			    // print "Accepted ", j, " ", (j<GocCD.x[0][2]), " ",rnd
+			    $o2.o(c).target_glomi.append($o2.o(c).nears.o(rnd))
+			    lo_glomi.remove(lo_glomi.index($o2.o(c).nears.o(rnd)))
+			}
+		    }
+		    //print "glom to rem from lo_glomi ", lo_glomi.index($o2.o(c).nears.o(rnd)), " " , $o2.o(c).nears.o(rnd)
+		    $o2.o(c).nears.remove(rnd)
+		}
+		// print "LO glomi ", lo_glomi.count()
+		//print $o2.o(c).target_glomi.count()
+	    }
+	    // loop among the added gloms
+	    for i = set_goc,$o2.count()-1 {
+		$o2.o(i).targets.remove_all()
+		for j=0, $o2.o(i).target_glomi.count()-1 { 
+		    $o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
+		    // get the list of targetted grc by glom(j)
+		    // which is the target list for the goc(i)
+		    targ = $o2.o(i).targets.count()
+		    ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
+ 		    for k=targ, $o2.o(i).targets.count()-1 { 
+			// Add the synapse in the target grc
+			$o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
+			n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
+			
+			$o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))	    
 		    }
 		}
-		//print "glom to rem from lo_glomi ", lo_glomi.index($o2.o(c).nears.o(rnd)), " " , $o2.o(c).nears.o(rnd)
-		$o2.o(c).nears.remove(rnd)
 	    }
-	    // print "LO glomi ", lo_glomi.count()
-	    //print $o2.o(c).target_glomi.count()
-	}
-	// loop among the added gloms
-	for i = set_goc,$o2.count()-1 {
-	    $o2.o(i).targets.remove_all()
-	    for j=0, $o2.o(i).target_glomi.count()-1 { 
-		$o2.o(i).target_glomi.o(j).src_goc.append($o2.o(i))
-		// get the list of targetted grc by glom(j)
-		// which is the target list for the goc(i)
-		targ = $o2.o(i).targets.count()
-		ListAppend($o2.o(i).target_glomi.o(j).target_grcs, $o2.o(i).targets)
- 		for k=targ, $o2.o(i).targets.count()-1 { 
-		    // Add the synapse in the target grc
-		    $o2.o(i).targets.o(k).soma $o2.o(i).targets.o(k).GABA_L.append(new GRANULE_Gaba_det_vi(0.5))
-		    n_in_syn = $o2.o(i).targets.o(k).GABA_L.count()
-		    
-		    $o2.o(i).soma $o2.o(i).targets.o(k).GABA_SL.append(new NetCon(&v(0.5), $o2.o(i).targets.o(k).GABA_L.o(n_in_syn-1), -20, goc_grc_d, goc_grc_w))	    
+	    lo_glomi.remove_all()
+	    for k= 0,$o1.count()-1 {
+		if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
+		    lo_glomi.append($o1.o(k))
 		}
 	    }
+	    // print "Lo glomi ", lo_glomi.count()
+	    // print "Golgi ", $o2.count()
 	}
-	lo_glomi.remove_all()
-	for k= 0,$o1.count()-1 {
-	    if ($o1.o(k).src_goc.count()<$o5.x[0][1]) {
-		lo_glomi.append($o1.o(k))
-	    }
-	}
-	// print "Lo glomi ", lo_glomi.count()
-	// print "Golgi ", $o2.count()
-    }	
+    }
 }
 
 proc goc2grc_connect_comp() { local n,i,j,k,nglom, n_in_syn, idx, idx2 localobj vvd, u, lo_glomi

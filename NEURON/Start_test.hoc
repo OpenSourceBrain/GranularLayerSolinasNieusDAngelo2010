@@ -56,6 +56,10 @@ sprint(command,"%s/%s",dirname,"grc_coord.lst")
 pos2file(command,grc)
 
 planarmap(NetGoc,NetStep.getcol(1),"Goc","goc",Origin,1)
+print "Golgis", goc.o[0]
+print goc.o[0].coord.printf()
+print ""
+
 
 planarmap(NetGlom,NetStep.getcol(2),"Glom","glom",Origin,1)
 sprint(command,"%s/%s",dirname,"glom_coord.lst")
@@ -74,13 +78,17 @@ cvode.use_local_dt(1)
 
 load_file("inspect.hoc")
 
+print grc.count
+print glom.count
+
 glom2grc_connect(grc,glom,Grcdend,GrcCD.getcol(0))
 
 // Let each glom know the farthes other glom reached by its tragets grcs
 Div_glom(glom,"glom",grc,"grc",dirname)
 
 mesh = 0
-goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0,mesh,grc)
+append_extra_gocs = 1
+goc2grc_connect(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0,mesh,grc,append_extra_gocs,append_extra_gocs)
 // goc2grc_connect_comp(glom,goc,GocAx,GocCD,GlomCD,Grcdend.x[3],NetSize,0)
 // block tonic GABA
 // for i = 0,grc.count()-1 {
