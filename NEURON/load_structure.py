@@ -15,9 +15,9 @@ def read_lol_file(dirname, filename,separator = None):
         print 'Cannot open', dirname+filename
         
     if separator is None:
-        lol = [[float(t) for t in l[:-1].split()] for l in f.readlines() ]
+        lol = [[int(t) for t in l[:-1].split()] for l in f.readlines() ]
     else:
-        lol = [[float(t) for t in l[:-1].split(separator)] for l in f.readlines()]
+        lol = [[int(t) for t in l[:-1].split(separator)] for l in f.readlines()]
     f.close()
     return lol
 

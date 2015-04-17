@@ -25,12 +25,13 @@ from random import seed
 
 
 def generate_granule_cell_layer(network_id,
-                                x_size,     # um
-                                y_size,     # um
-                                z_size,     # um
-                                numCells_grc,
-                                numCells_gol,
+                                x_size = 0,     # um
+                                y_size = 0,     # um
+                                z_size = 0,     # um
+                                numCells_grc = 0,
+                                numCells_gol = 0,
                                 connections = True,
+                                connections_method = 'random',
                                 connection_probability_grc_gol =   0.2,
                                 connection_probability_gol_grc =   0.1,
                                 inputs = False,
@@ -76,7 +77,25 @@ def generate_granule_cell_layer(network_id,
     for syn in [grc_gol_syn, gol_grc_syn]:
         nml_doc.includes.append(IncludeType(href='%s.synapse.nml'%syn))
 
-
+        
+    if network_id == 'Solinas2010':
+        # Set size and cell numbers for Solinas 2010 network 
+        import sys,os
+        NEURON_sim_path = '../NEURON'
+        sys.path.append(NEURON_sim_path)
+        local_path = os.getcwd()
+        os.chdir(NEURON_sim_path)
+        print os.getcwd()
+        import GenerateSolinas2010 as GS2010
+        structure = GS2010.GenerateSolinas2010(generate=True)
+        os.chdir(local_path)
+        goc_data = structure['Golgis']
+        grc_data = structure['Granules']
+        grc_pos = grc_data['positions']['data']
+        goc_pos = goc_data['positions']['data']
+        numCells_grc = grc_pos.shape[0]
+        numCells_gol = goc_pos.shape[0]
+        
     # Generate excitatory cells 
 
     grc_pop = Population(id=grc_group, component=grc_group_component, type="populationList", size=numCells_grc)
@@ -86,7 +105,7 @@ def generate_granule_cell_layer(network_id,
             index = i
             inst = Instance(id=index)
             grc_pop.instances.append(inst)
-            inst.location = Location(x=str(x_size*random()), y=str(y_size*random()), z=str(z_size*random()))
+            inst.location = Location(x=str(grc_pos[i,0]), y=str(grc_pos[i,1]), z=str(grc_pos[i,2]))
 
     # Generate inhibitory cells
     gol_pop = Population(id=gol_group, component=gol_group_component, type="populationList", size=numCells_gol)
@@ -96,8 +115,8 @@ def generate_granule_cell_layer(network_id,
             index = i
             inst = Instance(id=index)
             gol_pop.instances.append(inst)
-            inst.location = Location(x=str(x_size*random()), y=str(y_size*random()), z=str(z_size*random()))
-
+            inst.location = Location(x=str(goc_pos[i,0]), y=str(goc_pos[i,1]), z=str(goc_pos[i,2]))
+    
     if connections:
 
         proj_grc_gol = Projection(id=net_conn_grc_gol, presynaptic_population=grc_group, postsynaptic_population=gol_group, synapse=grc_gol_syn)
@@ -109,7 +128,6 @@ def generate_granule_cell_layer(network_id,
         count_gol_grc = 0
 
         # Generate exc -> *  connections
-
 
         def add_connection(projection, id, pre_pop, pre_component, pre_cell_id, pre_seg_id, post_pop, post_component, post_cell_id, post_seg_id):
 
@@ -123,18 +141,26 @@ def generate_granule_cell_layer(network_id,
 
             projection.connections.append(connection)
 
-
+        # Connect Granule cells to Golgi cells
         for i in range(0, numCells_grc):
-            for j in range(0, numCells_gol):
-                if i != j:
-                    if random()<connection_probability_grc_gol:
+            # get targets for grc[i] from the structure dict
+            print 'Granule ', i , structure['Granules']['divergence_to_goc']['data'][i][1:]
+            for j in structure['Granules']['divergence_to_goc']['data'][i][1:]:
+                add_connection(proj_grc_gol, count_grc_gol, grc_group, grc_group_component, i, 0, gol_group, gol_group_component, j, 0)
+                count_grc_gol+=1
 
-                            add_connection(proj_grc_gol, count_grc_gol, grc_group, grc_group_component, i, 0, gol_group, gol_group_component, j, 0)
-                    count_grc_gol+=1
-
-                    if random()<connection_probability_gol_grc:
-
-                            add_connection(proj_gol_grc, count_gol_grc, gol_group, gol_group_component, j, 0, grc_group, grc_group_component, i, 0)
+        # Connect Golgi cells to Granule cells
+        for i in range(0, numCells_gol):
+            # get targets glomeruli for goc[i] from the lol in structure dict
+            print 'Golgi ', i
+            print structure['Golgis']['divergence_to_glom']['data'][i][1:]
+            for k in structure['Golgis']['divergence_to_glom']['data'][i][1:]:
+                # get target granule cells for glom[k] from the lol in structure dict
+                # print 'Glom ', k
+                # print structure['Glomeruli']['divergence_to_grc']['data'][k]
+                for j in structure['Glomeruli']['divergence_to_grc']['data'][k][1:]:
+                    # print 'Granule ', j
+                    add_connection(proj_gol_grc, count_gol_grc, gol_group, gol_group_component, i, 0, grc_group, grc_group_component, j, 0)
                     count_gol_grc+=1
 
     if inputs:
@@ -234,41 +260,7 @@ def generate_granule_cell_layer(network_id,
 if __name__ == "__main__":
     
     
-    generate_granule_cell_layer("Cerebellum3DDemo",
-                                x_size = 1000,
-                                y_size = 100, 
-                                z_size = 1000,
-                                numCells_grc = 40,
-                                numCells_gol = 20,
-                                connections = True,
-                                generate_lems_simulation = False)
+    generate_granule_cell_layer("Solinas2010",
+                                connections_method = '../NEURON/',
+                                generate_lems_simulation = True)
                                 
-    x_size = 200
-    y_size = 30
-    z_size = 200
-    numCells_grc = 4
-    numCells_gol = 4
-
-    generate_granule_cell_layer("GCL_%sx%sx%s_%igrc_%igol"%(x_size, y_size, z_size, numCells_grc, numCells_gol),
-                                x_size,
-                                y_size, 
-                                z_size,
-                                numCells_grc,
-                                numCells_gol,
-                                connections = True,
-                                connection_probability_grc_gol =   0.75,
-                                connection_probability_gol_grc =   0.75,
-                                inputs = True,
-                                num_inputs_per_grc = 12,
-                                input_firing_rate = 150, # Hz
-                                generate_lems_simulation = True,
-                                duration = 100,
-                                dt = 0.01)
-
-                                     
-
-
-
-
-
-
